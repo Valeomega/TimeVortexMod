@@ -3,57 +3,69 @@ package net.plaaasma.vortexmod.network;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
-import net.plaaasma.vortexmod.block.entity.KeypadBlockEntity;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.plaaasma.vortexmod.block.entity.MonitorBlockEntity;
+import net.plaaasma.vortexmod.VortexMod;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 
-public class ClientboundMonitorDataPacket {
-    private final BlockPos targetPos;
-    private final Map<Integer, Integer> fromTag;
-    private final String targetDim;
-    private final String currentDim;
+public record ClientboundMonitorDataPacket(BlockPos targetPos, Map<Integer, Integer> fromTag, String targetDim, String currentDim) implements CustomPacketPayload {
+    public static final Type<ClientboundMonitorDataPacket> TYPE =
+            new Type<>(ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "clientbound_monitor_data"));
 
-    public ClientboundMonitorDataPacket(BlockPos targetPos, Map<Integer, Integer> fromTag, String targetDim, String currentDim) {
-        this.targetPos = targetPos;
-        this.fromTag = fromTag;
-        this.targetDim = targetDim;
-        this.currentDim = currentDim;
-    }
+    public static final StreamCodec<RegistryFriendlyByteBuf, ClientboundMonitorDataPacket> STREAM_CODEC =
+            StreamCodec.of(ClientboundMonitorDataPacket::encode, ClientboundMonitorDataPacket::decode);
 
-    public ClientboundMonitorDataPacket(FriendlyByteBuf buffer) {
-        this(buffer.readBlockPos(), buffer.readMap(FriendlyByteBuf::readInt, FriendlyByteBuf::readInt), buffer.readUtf(), buffer.readUtf());
-    }
-
-    public void encode(FriendlyByteBuf buffer) {
-        buffer.writeBlockPos(this.targetPos);
-        buffer.writeMap(this.fromTag, FriendlyByteBuf::writeInt, FriendlyByteBuf::writeInt);
-        buffer.writeUtf(this.targetDim);
-        buffer.writeUtf(this.currentDim);
-    }
-
-    public void handle(Supplier<NetworkEvent.ClientCustomPayloadEvent.Context> context) {
-        NetworkEvent.Context realContext = context.get();
-
-        Minecraft client = Minecraft.getInstance();
-        ClientLevel clientLevel = client.level;
-
-        MonitorBlockEntity monitorBlockEntity = (MonitorBlockEntity) clientLevel.getBlockEntity(this.targetPos);
-
-        Iterable<Integer> keyList = this.fromTag.keySet();
-
-        for (Integer key : keyList) {
-            monitorBlockEntity.data.set(key, this.fromTag.get(key));
+    public static ClientboundMonitorDataPacket decode(RegistryFriendlyByteBuf buffer) {
+        int mapSize = buffer.readVarInt();
+        Map<Integer, Integer> fromTag = new HashMap<>(mapSize);
+        for (int i = 0; i < mapSize; i++) {
+            fromTag.put(buffer.readVarInt(), buffer.readVarInt());
         }
+        return new ClientboundMonitorDataPacket(
+                buffer.readBlockPos(),
+                fromTag,
+                buffer.readUtf(),
+                buffer.readUtf()
+        );
+    }
 
-        monitorBlockEntity.target_dimension = this.targetDim;
-        monitorBlockEntity.current_dimension = this.currentDim;
+    public static void encode(RegistryFriendlyByteBuf buffer, ClientboundMonitorDataPacket packet) {
+        buffer.writeBlockPos(packet.targetPos);
+        buffer.writeVarInt(packet.fromTag.size());
+        for (Map.Entry<Integer, Integer> entry : packet.fromTag.entrySet()) {
+            buffer.writeVarInt(entry.getKey());
+            buffer.writeVarInt(entry.getValue());
+        }
+        buffer.writeUtf(packet.targetDim);
+        buffer.writeUtf(packet.currentDim);
+    }
 
-        realContext.setPacketHandled(true);
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
+
+    public void handle(IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Minecraft client = Minecraft.getInstance();
+            ClientLevel clientLevel = client.level;
+            if (clientLevel == null) return;
+
+            MonitorBlockEntity monitorBlockEntity = (MonitorBlockEntity) clientLevel.getBlockEntity(this.targetPos);
+            if (monitorBlockEntity == null) return;
+
+            for (Map.Entry<Integer, Integer> entry : this.fromTag.entrySet()) {
+                monitorBlockEntity.data.set(entry.getKey(), entry.getValue());
+            }
+
+            monitorBlockEntity.target_dimension = this.targetDim;
+            monitorBlockEntity.current_dimension = this.currentDim;
+        });
     }
 }

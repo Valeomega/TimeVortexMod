@@ -137,15 +137,15 @@ public class AngelModel<T extends Entity> extends HierarchicalModel<T> {
 	}
 
 	@Override
-	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
-		Bottom.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		Clothparts.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		Head.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		Rightarm.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		Leftarm.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		Body.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		Rwing.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		Lwing.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
+	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color) {
+		Bottom.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+		Clothparts.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+		Head.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+		Rightarm.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+		Leftarm.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+		Body.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+		Rwing.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+		Lwing.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
 	}
 
 	@Override

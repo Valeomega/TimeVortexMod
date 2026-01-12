@@ -1,5 +1,6 @@
 package net.plaaasma.vortexmod.block.custom;
 
+import com.mojang.serialization.MapCodec;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.multiplayer.ClientHandshakePacketListenerImpl;
 import net.minecraft.core.BlockPos;
@@ -13,6 +14,7 @@ import java.util.*;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,12 +22,14 @@ import net.minecraft.server.network.MemoryServerHandshakePacketListenerImpl;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
@@ -37,15 +41,13 @@ import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraftforge.common.world.ForgeChunkManager;
-import net.minecraftforge.event.ServerChatEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.common.world.chunk.TicketController;
 import net.plaaasma.vortexmod.VortexMod;
 import net.plaaasma.vortexmod.block.ModBlocks;
 import net.plaaasma.vortexmod.block.entity.*;
@@ -55,14 +57,22 @@ import net.plaaasma.vortexmod.item.ModItems;
 import net.plaaasma.vortexmod.mapdata.LocationMapData;
 import net.plaaasma.vortexmod.sound.ModSounds;
 import net.plaaasma.vortexmod.worldgen.dimension.ModDimensions;
-import org.apache.logging.log4j.core.jmx.Server;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 
 public class VortexInterfaceBlock extends BaseEntityBlock {
+    public static final MapCodec<VortexInterfaceBlock> CODEC = BlockBehaviour.simpleCodec(VortexInterfaceBlock::new);
+    private static final TicketController CHUNK_TICKET_CONTROLLER =
+            new TicketController(ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "chunk_tickets"));
+
     public VortexInterfaceBlock(Properties pProperties) {
         super(pProperties);
+    }
+
+    @Override
+    public MapCodec<VortexInterfaceBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -71,19 +81,31 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+    protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHit) {
+        return doUse(pState, pLevel, pPos, pPlayer, InteractionHand.MAIN_HAND, ItemStack.EMPTY, pHit);
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack pStack, BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+        InteractionResult result = doUse(pState, pLevel, pPos, pPlayer, pHand, pStack, pHit);
+        if (result.consumesAction()) {
+            return ItemInteractionResult.sidedSuccess(pLevel.isClientSide());
+        }
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    private InteractionResult doUse(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, ItemStack holdingItem, BlockHitResult pHit) {
         if (pLevel instanceof ServerLevel serverLevel) {
             MinecraftServer minecraftserver = serverLevel.getServer();
             ServerLevel overworld = minecraftserver.getLevel(Level.OVERWORLD);
             ServerLevel tardisDimension = minecraftserver.getLevel(ModDimensions.tardisDIM_LEVEL_KEY);
             LocationMapData data = LocationMapData.get(overworld);
-            ItemStack holdingItem = pPlayer.getItemInHand(pHand);
             if (holdingItem.is(ModItems.WRENCH.get())) {
                 BlockEntity blockEntity = serverLevel.getBlockEntity(pPos);
 
                 if (blockEntity != null) {
                     ItemStack droppedItem = new ItemStack(pState.getBlock()); // Create an ItemStack of the block
-                    blockEntity.saveToItem(droppedItem);
+                    blockEntity.saveToItem(droppedItem, serverLevel.registryAccess());
                     serverLevel.removeBlock(pPos, false); // Remove the block
 
                     // Spawn the ItemStack in the world
@@ -187,7 +209,7 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
 
                             CompoundTag nbtData = null;
                             if (blockEntity != null) {
-                                nbtData = blockEntity.saveWithFullMetadata();
+                                nbtData = blockEntity.saveWithFullMetadata(serverLevel.registryAccess());
                             }
 
                             tardisDimension.setBlockAndUpdate(currentTargetPos, blockState);
@@ -195,7 +217,7 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
                             if (nbtData != null) {
                                 BlockEntity newBlockEntity = tardisDimension.getBlockEntity(currentTargetPos);
                                 if (newBlockEntity != null) {
-                                    newBlockEntity.load(nbtData);
+                                    newBlockEntity.loadWithComponents(nbtData, serverLevel.registryAccess());
                                 }
                             }
 
@@ -217,7 +239,7 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
                 for (BlockPos positionToBeRemoved : toBeRemoved) {
                     BlockEntity blockEntity = serverLevel.getBlockEntity(positionToBeRemoved);
                     if (blockEntity != null) {
-                        blockEntity.load(new CompoundTag());
+                        blockEntity.loadWithComponents(new CompoundTag(), serverLevel.registryAccess());
                     }
                     serverLevel.removeBlock(positionToBeRemoved, false);
                     serverLevel.removeBlockEntity(positionToBeRemoved);
@@ -245,9 +267,9 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
                 data.getDataMap().put(tardisMob.getUUID().toString(), tardisTarget);
 
                 ChunkPos chunkPos = tardisDimension.getChunkAt(interfacePos).getPos();
-                ForgeChunkManager.forceChunk(tardisDimension, VortexMod.MODID, interfacePos, chunkPos.x, chunkPos.z, true, true);
+                CHUNK_TICKET_CONTROLLER.forceChunk(tardisDimension, interfacePos, chunkPos.x, chunkPos.z, true, true);
                 chunkPos = serverLevel.getChunkAt(pPos).getPos();
-                ForgeChunkManager.forceChunk(serverLevel, VortexMod.MODID, pPos, chunkPos.x, chunkPos.z, true, true);
+                CHUNK_TICKET_CONTROLLER.forceChunk(serverLevel, pPos, chunkPos.x, chunkPos.z, true, true);
 
                 pPlayer.setItemInHand(pHand, new ItemStack(ModItems.TARDIS_KEY.get(), 1));
 
@@ -289,7 +311,7 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
     public void onPlace(BlockState pState, Level pLevel, BlockPos pPos, BlockState pOldState, boolean pMovedByPiston) {
         if (pLevel instanceof ServerLevel serverLevel) {
             ChunkPos chunkPos = serverLevel.getChunkAt(pPos).getPos();
-            ForgeChunkManager.forceChunk(serverLevel, VortexMod.MODID, pPos, chunkPos.x, chunkPos.z, true, true);
+            CHUNK_TICKET_CONTROLLER.forceChunk(serverLevel, pPos, chunkPos.x, chunkPos.z, true, true);
         }
 
         super.onPlace(pState, pLevel, pPos, pOldState, pMovedByPiston);
@@ -313,8 +335,8 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void appendHoverText(ItemStack pStack, @Nullable BlockGetter pLevel, List<Component> pTooltip, TooltipFlag pFlag) {
+    public void appendHoverText(ItemStack pStack, Item.TooltipContext pContext, List<Component> pTooltip, TooltipFlag pFlag) {
         pTooltip.add(Component.translatable("tooltip.vortexmod.interface_block.tooltip"));
-        super.appendHoverText(pStack, pLevel, pTooltip, pFlag);
+        super.appendHoverText(pStack, pContext, pTooltip, pFlag);
     }
 }

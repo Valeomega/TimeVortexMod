@@ -87,7 +87,7 @@ public class BioscannerBlockEntityRenderer implements BlockEntityRenderer<Biomet
                 displayProfile = gameProfiles.get(random.nextInt(gameProfiles.size()));
             }
         }
-        ResourceLocation texture = Minecraft.getInstance().getSkinManager().m_240306_(displayProfile);
+        ResourceLocation texture = Minecraft.getInstance().getSkinManager().getInsecureSkin(displayProfile).texture();
 
         RenderSystem.setShaderTexture(0, texture); // Bind the texture
         RenderSystem.enableBlend();
@@ -101,10 +101,13 @@ public class BioscannerBlockEntityRenderer implements BlockEntityRenderer<Biomet
         float minV = 0.125f;
         float maxV = 0.25f;
 
-        vertexConsumer.vertex(pose, -0.225f, -0.225f, 0.0f).color(255, 255, 255, 50).uv(minU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(1, 0, 0).endVertex();
-        vertexConsumer.vertex(pose, 0.225f, -0.225f, 0.0f).color(255, 255, 255, 50).uv(maxU, maxV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(1, 0, 0).endVertex();
-        vertexConsumer.vertex(pose, 0.225f, 0.225f, 0.0f).color(255, 255, 255, 50).uv(maxU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(1, 0, 0).endVertex();
-        vertexConsumer.vertex(pose, -0.225f, 0.225f, 0.0f).color(255, 255, 255, 50).uv(minU, minV).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(1, 0, 0).endVertex();
+        int lightU = packedLight & 0xFFFF;
+        int lightV = (packedLight >> 16) & 0xFFFF;
+
+        vertexConsumer.addVertex(pose, -0.225f, -0.225f, 0.0f).setColor(255, 255, 255, 50).setUv(minU, maxV).setOverlay(OverlayTexture.NO_OVERLAY).setUv2(lightU, lightV).setNormal(1, 0, 0);
+        vertexConsumer.addVertex(pose, 0.225f, -0.225f, 0.0f).setColor(255, 255, 255, 50).setUv(maxU, maxV).setOverlay(OverlayTexture.NO_OVERLAY).setUv2(lightU, lightV).setNormal(1, 0, 0);
+        vertexConsumer.addVertex(pose, 0.225f, 0.225f, 0.0f).setColor(255, 255, 255, 50).setUv(maxU, minV).setOverlay(OverlayTexture.NO_OVERLAY).setUv2(lightU, lightV).setNormal(1, 0, 0);
+        vertexConsumer.addVertex(pose, -0.225f, 0.225f, 0.0f).setColor(255, 255, 255, 50).setUv(minU, minV).setOverlay(OverlayTexture.NO_OVERLAY).setUv2(lightU, lightV).setNormal(1, 0, 0);
 
 
         RenderSystem.disableBlend();

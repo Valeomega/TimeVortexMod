@@ -20,6 +20,7 @@ import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.monster.*;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -126,8 +127,13 @@ public class DalekEntity extends Animal implements RangedAttackMob {
         super.readAdditionalSaveData(compound);
 
         if (compound.contains("WanderTarget")) {
-            this.wanderTarget = NbtUtils.readBlockPos(compound.getCompound("WanderTarget"));
+            this.wanderTarget = NbtUtils.readBlockPos(compound, "WanderTarget").orElse(null);
         }
+    }
+
+    @Override
+    public boolean isFood(ItemStack pStack) {
+        return false;
     }
 
     @Override

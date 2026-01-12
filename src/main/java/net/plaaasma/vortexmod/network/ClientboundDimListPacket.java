@@ -3,43 +3,66 @@ package net.plaaasma.vortexmod.network;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.plaaasma.vortexmod.block.entity.KeypadBlockEntity;
+import net.plaaasma.vortexmod.VortexMod;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 
-public class ClientboundDimListPacket {
-    private String dimension = "";
-    private final BlockPos targetPos;
-    private final Map<String, String> dimData;
+public record ClientboundDimListPacket(String dimension, BlockPos targetPos, Map<String, String> dimData) implements CustomPacketPayload {
+    public static final Type<ClientboundDimListPacket> TYPE =
+            new Type<>(ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "clientbound_dim_list"));
 
-    public ClientboundDimListPacket(String dimenison, BlockPos targetPos, Map<String, String> dimData) {
-        this.dimension = dimenison;
-        this.targetPos = targetPos;
-        this.dimData = dimData;
+    public static final StreamCodec<RegistryFriendlyByteBuf, ClientboundDimListPacket> STREAM_CODEC =
+            StreamCodec.of(ClientboundDimListPacket::encode, ClientboundDimListPacket::decode);
+
+    public static ClientboundDimListPacket decode(RegistryFriendlyByteBuf buffer) {
+        String dimension = buffer.readUtf();
+        BlockPos targetPos = buffer.readBlockPos();
+
+        int dimSize = buffer.readVarInt();
+        Map<String, String> dimData = new HashMap<>(dimSize);
+        for (int i = 0; i < dimSize; i++) {
+            dimData.put(buffer.readUtf(), buffer.readUtf());
+        }
+
+        return new ClientboundDimListPacket(
+                dimension,
+                targetPos,
+                dimData
+        );
     }
 
-    public ClientboundDimListPacket(FriendlyByteBuf buffer) {
-        this(buffer.readUtf(), buffer.readBlockPos(), buffer.readMap(FriendlyByteBuf::readUtf, FriendlyByteBuf::readUtf));
+    public static void encode(RegistryFriendlyByteBuf buffer, ClientboundDimListPacket packet) {
+        buffer.writeUtf(packet.dimension);
+        buffer.writeBlockPos(packet.targetPos);
+        buffer.writeVarInt(packet.dimData.size());
+        for (Map.Entry<String, String> entry : packet.dimData.entrySet()) {
+            buffer.writeUtf(entry.getKey());
+            buffer.writeUtf(entry.getValue());
+        }
     }
 
-    public void encode(FriendlyByteBuf buffer) {
-        buffer.writeUtf(this.dimension);
-        buffer.writeBlockPos(this.targetPos);
-        buffer.writeMap(this.dimData, FriendlyByteBuf::writeUtf, FriendlyByteBuf::writeUtf);
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    public void handle(Supplier<NetworkEvent.ClientCustomPayloadEvent.Context> context) {
-        NetworkEvent.Context realContext = context.get();
+    public void handle(IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Minecraft client = Minecraft.getInstance();
+            ClientLevel clientLevel = client.level;
+            if (clientLevel == null) return;
 
-        Minecraft client = Minecraft.getInstance();
-        ClientLevel clientLevel = client.level;
-
-        KeypadBlockEntity keypadBlockEntity = (KeypadBlockEntity) clientLevel.getBlockEntity(this.targetPos);
-        keypadBlockEntity.serverLevels = this.dimData.values().stream().toList();
-
-        realContext.setPacketHandled(true);
+            KeypadBlockEntity keypadBlockEntity = (KeypadBlockEntity) clientLevel.getBlockEntity(this.targetPos);
+            if (keypadBlockEntity != null) {
+                keypadBlockEntity.serverLevels = this.dimData.values().stream().toList();
+            }
+        });
     }
 }

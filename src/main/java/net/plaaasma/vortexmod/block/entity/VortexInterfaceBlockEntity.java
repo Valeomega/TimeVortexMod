@@ -5,6 +5,7 @@ import dan200.computercraft.api.lua.LuaFunction;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -31,12 +32,9 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.common.world.ForgeChunkManager;
 import net.plaaasma.vortexmod.VortexMod;
 import net.plaaasma.vortexmod.block.ModBlockStateProperties;
 import net.plaaasma.vortexmod.block.ModBlocks;
@@ -50,7 +48,6 @@ import net.plaaasma.vortexmod.mapdata.LocationMapData;
 import net.plaaasma.vortexmod.sound.ModSounds;
 import net.plaaasma.vortexmod.util.ModEnergyStorage;
 import net.plaaasma.vortexmod.worldgen.dimension.ModDimensions;
-import net.plaaasma.vortexmod.worldgen.portal.ModTeleporter;
 import org.checkerframework.checker.units.qual.C;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +85,6 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
     public final ContainerData data;
     private final ModEnergyStorage energy = new ModEnergyStorage(24000, 1024, 0, 2000);
-    private final LazyOptional<ModEnergyStorage> energyOptional = LazyOptional.of(() -> this.energy);
 
     public VortexInterfaceBlockEntity(BlockPos pPos, BlockState pBlockState) {
         super(ModBlockEntities.VORTEX_INTERFACE_BE.get(), pPos, pBlockState);
@@ -177,12 +173,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
     }
 
     @Override
-    public void invalidateCaps() {
-        super.invalidateCaps();
-    }
-
-    @Override
-    public void load(CompoundTag pTag) {
+    protected void loadAdditional(CompoundTag pTag, HolderLookup.Provider pRegistries) {
         CompoundTag vortexModData = pTag.getCompound(VortexMod.MODID);
 
         this.ticks = vortexModData.getInt("ticks");
@@ -213,14 +204,14 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             this.exterior_uuid = vortexModData.getUUID("exterior_uuid");
         }
         if (vortexModData.contains("energy")) {
-            this.energy.deserializeNBT(vortexModData.get("energy"));
+            this.energy.deserializeNBT(pRegistries, vortexModData.get("energy"));
         }
 
-        super.load(pTag);
+        super.loadAdditional(pTag, pRegistries);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag pTag) {
+    protected void saveAdditional(CompoundTag pTag, HolderLookup.Provider pRegistries) {
         CompoundTag vortexModData = new CompoundTag();
 
         vortexModData.putInt("ticks", this.ticks);
@@ -247,34 +238,10 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
         vortexModData.putUUID("exterior_uuid", this.exterior_uuid);
         vortexModData.putInt("sound_time", this.sound_time);
         vortexModData.putInt("ready_to_land", this.ready_to_land);
-        vortexModData.put("energy", this.energy.serializeNBT());
+        vortexModData.put("energy", this.energy.serializeNBT(pRegistries));
         pTag.put(VortexMod.MODID, vortexModData);
 
-        super.saveAdditional(pTag);
-    }
-
-    @Override
-    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap) {
-        if (cap == ForgeCapabilities.ENERGY) {
-            return this.energyOptional.cast();
-        }
-        else {
-            return super.getCapability(cap);
-        }
-    }
-
-    @Override
-    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        if (cap == ForgeCapabilities.ENERGY) {
-            return this.energyOptional.cast();
-        }
-        else {
-            return super.getCapability(cap, side);
-        }
-    }
-
-    public LazyOptional<ModEnergyStorage> getEnergyOptional() {
-        return this.energyOptional;
+        super.saveAdditional(pTag, pRegistries);
     }
 
     public ModEnergyStorage getEnergy() {
@@ -630,7 +597,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                         if (blockEntity instanceof SizeManipulatorBlockEntity sizeManipulatorBlockEntity) {
                             size += sizeManipulatorBlockEntity.data.get(0);
                             if ((sizeManipulatorBlockEntity.getAlphaPos() != null && sizeManipulatorBlockEntity.getBetaPos() != null)) {
-                                overrideAABB = new AABB(sizeManipulatorBlockEntity.getAlphaPos(), sizeManipulatorBlockEntity.getBetaPos());
+                                overrideAABB = new AABB(Vec3.atLowerCornerOf(sizeManipulatorBlockEntity.getAlphaPos()), Vec3.atLowerCornerOf(sizeManipulatorBlockEntity.getBetaPos()));
                                 if (overrideAABB.getSize() == 0) {
                                     overrideAABB = null;
                                 }
@@ -1020,20 +987,20 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
                         this.data.set(1, this.data.get(0));
                         ChunkPos chunkPos = vortexDimension.getChunkAt(vortexTargetPos).getPos();
-                        ForgeChunkManager.forceChunk(vortexDimension, VortexMod.MODID, vortexTargetPos, chunkPos.x, chunkPos.z, true, true);
+                        // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
                         handleVortexTeleports(size, overrideAABB, pLevel, pPos, vortexTargetPos);
                         chunkPos = currentDimension.getChunkAt(pPos).getPos();
-                        ForgeChunkManager.forceChunk(vortexDimension, VortexMod.MODID, pPos, chunkPos.x, chunkPos.z, false, true);
+                        // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
                         vortexDimension.playSeededSound(null, vortexTargetPos.getX(), vortexTargetPos.getY(), vortexTargetPos.getZ(), ModSounds.FLIGHT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
                     } else if (pLevel == vortexDimension && Math.sqrt(pPos.distToCenterSqr(targetX, pPos.getY(), targetZ)) <= 250 && this.data.get(0) >= (tickSpeed * minFlightSeconds) + this.data.get(1)) {
                         BlockPos flight_target = new BlockPos(targetX, targetY, targetZ);
                         this.data.set(1, this.data.get(0));
                         this.data.set(11, 0);
                         ChunkPos chunkPos = targetDimension.getChunkAt(flight_target).getPos();
-                        ForgeChunkManager.forceChunk(targetDimension, VortexMod.MODID, flight_target, chunkPos.x, chunkPos.z, true, true);
+                        // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
                         handleTeleports(size, overrideAABB, vortexDimension, targetDimension, pPos, flight_target);
                         chunkPos = currentDimension.getChunkAt(pPos).getPos();
-                        ForgeChunkManager.forceChunk(currentDimension, VortexMod.MODID, pPos, chunkPos.x, chunkPos.z, false, true);
+                        // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
                         this.data.set(6, targetX);
                         this.data.set(7, targetY);
                         this.data.set(8, targetZ);
@@ -1054,11 +1021,11 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                             BlockPos newTarget = findNewVortexPosition(pPos, new BlockPos(targetX, targetY, targetZ));
                             if (Math.sqrt(newTarget.distToCenterSqr(pPos.getX(), pPos.getY(), pPos.getZ())) > size * 1.25) {
                                 ChunkPos chunkPos = vortexDimension.getChunkAt(newTarget).getPos();
-                                ForgeChunkManager.forceChunk(vortexDimension, VortexMod.MODID, newTarget, chunkPos.x, chunkPos.z, true, true);
+                                // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
                                 handleVortex2VortexTeleports(size, overrideAABB, pLevel, pPos, newTarget);
                                 ChunkPos newChunkPos = vortexDimension.getChunkAt(pPos).getPos();
                                 if (newChunkPos != chunkPos) {
-                                    ForgeChunkManager.forceChunk(vortexDimension, VortexMod.MODID, pPos, newChunkPos.x, newChunkPos.z, false, true);
+                                    // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
                                     vortexDimension.playSeededSound(null, newTarget.getX(), newTarget.getY(), newTarget.getZ(), ModSounds.FLIGHT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
                                 }
                             }
@@ -1202,9 +1169,9 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                             tardisEntity.setNoGravity(true);
 
                             ChunkPos chunkPos = currentDimension.getChunkAt(exteriorPos).getPos();
-                            ForgeChunkManager.forceChunk(currentDimension, VortexMod.MODID, exteriorPos, chunkPos.x, chunkPos.z, false, true);
+                            // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
 
-                            tardisEntity.teleportToWithTicket(exteriorPos.getX() + 0.5, -128, exteriorPos.getZ() + 0.5);
+                            tardisEntity.teleportToWithTicket(currentDimension, exteriorPos.getX() + 0.5, -128.0, exteriorPos.getZ() + 0.5, tardisEntity.getYRot(), tardisEntity.getXRot());
                             if (this.data.get(0) >= this.data.get(1) + demat_time + 1 && (this.data.get(0) - (this.data.get(1) + demat_time) > 0)) {
                                 if (this.data.get(0) >= this.data.get(22) + (tickSpeed * 1.35)) {
                                     pLevel.playSeededSound(null, pPos.getX(), pPos.getY(), pPos.getZ(), ModSounds.EUC_FLIGHT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
@@ -1332,7 +1299,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                 }
                                 tardisEntity.tick();
                                 ChunkPos chunkPos = targetDimension.getChunkAt(flight_target).getPos();
-                                ForgeChunkManager.forceChunk(targetDimension, VortexMod.MODID, flight_target, chunkPos.x, chunkPos.z, true, true);
+                                // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
                                 for (int x = -size; x <= size; x++) {
                                     for (int y = -1; y <= y_size + (y_size - 1); y++) {
                                         for (int z = -size; z <= size; z++) {
@@ -1381,7 +1348,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
                     BlockPos exteriorPos = new BlockPos(this.data.get(6), this.data.get(7), this.data.get(8));
                     ChunkPos chunkPos = currentDimension.getChunkAt(exteriorPos).getPos();
-                    ForgeChunkManager.forceChunk(currentDimension, VortexMod.MODID, exteriorPos, chunkPos.x, chunkPos.z, true, true);
+                    // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
                 }
             }
             doDisruption(temp_target, disruptorDataMap, random, pLevel, pPos, size, y_size, this.data.get(2));
@@ -1477,7 +1444,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                 serverLevel.setBlockAndUpdate(doorTarget, ModBlocks.DOOR_BLOCK.get().defaultBlockState());
             }
 
-            player.changeDimension(pLevel, new ModTeleporter(tardisTarget));
+            player.changeDimension(new DimensionTransition((ServerLevel) pLevel, tardisTarget, Vec3.ZERO, player.getYRot(), player.getXRot(), DimensionTransition.DO_NOTHING));
         }
 
         AABB searchBB = new AABB(target.getX() - 1, target.getY() - 1, target.getZ() - 1, target.getX() + 1, target.getY() + 1, target.getZ() + 1);
@@ -1539,7 +1506,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     serverLevel.setBlockAndUpdate(doorTarget, ModBlocks.DOOR_BLOCK.get().defaultBlockState());
                 }
 
-                nearbyEntity.changeDimension(pLevel, new ModTeleporter(tardisTarget));
+                nearbyEntity.changeDimension(new DimensionTransition((ServerLevel) pLevel, tardisTarget, Vec3.ZERO, nearbyEntity.getYRot(), nearbyEntity.getXRot(), DimensionTransition.DO_NOTHING));
             }
         }
     }
@@ -2720,7 +2687,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
             CompoundTag nbtData = null;
             if (blockEntity != null) {
-                nbtData = blockEntity.saveWithFullMetadata();
+                nbtData = blockEntity.saveWithFullMetadata(this.level.registryAccess());
                 if (blockEntity instanceof SizeManipulatorBlockEntity sizeManipulatorBlockEntity) {
                     sizeManipulatorBlockEntity.itemHandler.setStackInSlot(0, new ItemStack(Items.AIR, 0));
                 }
@@ -2731,7 +2698,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             if (nbtData != null) {
                 BlockEntity newBlockEntity = serverlevel.getBlockEntity(augmentedPos);
                 if (newBlockEntity != null) {
-                    newBlockEntity.load(nbtData);
+                    newBlockEntity.loadWithComponents(nbtData, this.level.registryAccess());
                 }
             }
         }
@@ -2753,8 +2720,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
                 CompoundTag nbtData = null;
                 if (blockEntity != null) {
-                    nbtData = blockEntity.saveWithFullMetadata();
-                    blockEntity.load(new CompoundTag());
+                    nbtData = blockEntity.saveWithFullMetadata(this.level.registryAccess());
+                    blockEntity.loadWithComponents(new CompoundTag(), this.level.registryAccess());
                     if (blockEntity instanceof SizeManipulatorBlockEntity sizeManipulatorBlockEntity) {
                         sizeManipulatorBlockEntity.itemHandler.setStackInSlot(0, new ItemStack(Items.AIR, 0));
                     }
@@ -2768,7 +2735,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     if (nbtData != null) {
                         BlockEntity newBlockEntity = dimension.getBlockEntity(augmentedPos);
                         if (newBlockEntity != null) {
-                            newBlockEntity.load(nbtData);
+                            newBlockEntity.loadWithComponents(nbtData, this.level.registryAccess());
                         }
                     }
                 }
@@ -2790,8 +2757,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                 BlockEntity blockEntity = pLevel.getBlockEntity(currentPos);
                 CompoundTag nbtData = null;
                 if (blockEntity != null) {
-                    nbtData = blockEntity.saveWithFullMetadata();
-                    blockEntity.load(new CompoundTag());
+                    nbtData = blockEntity.saveWithFullMetadata(this.level.registryAccess());
+                    blockEntity.loadWithComponents(new CompoundTag(), this.level.registryAccess());
                     if (blockEntity instanceof SizeManipulatorBlockEntity sizeManipulatorBlockEntity) {
                         sizeManipulatorBlockEntity.itemHandler.setStackInSlot(0, new ItemStack(Items.AIR, 0));
                     }
@@ -2810,7 +2777,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     if (nbtData != null) {
                         BlockEntity newBlockEntity = dimension.getBlockEntity(augmentedPos);
                         if (newBlockEntity != null) {
-                            newBlockEntity.load(nbtData);
+                            newBlockEntity.loadWithComponents(nbtData, this.level.registryAccess());
                         }
                     }
                 }
@@ -2828,8 +2795,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             }
             BlockEntity blockEntity = pLevel.getBlockEntity(currentPos);
             if (blockEntity != null) {
-                blockEntity.load(new CompoundTag());
-                blockEntity.invalidateCaps();
+                blockEntity.loadWithComponents(new CompoundTag(), this.level.registryAccess());
             }
             pLevel.removeBlock(currentPos, false);
             pLevel.removeBlockEntity(currentPos);
@@ -2853,7 +2819,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             if (dimension != null && !player.isPassenger()) {
                 Vec3 augmentedPos = new Vec3(targetPos.getX() + x, targetPos.getY() + y, targetPos.getZ() + z);
 
-                player.changeDimension(dimension, new ModTeleporter(augmentedPos));
+                player.changeDimension(new DimensionTransition(dimension, augmentedPos, Vec3.ZERO, player.getYRot(), player.getXRot(), DimensionTransition.DO_NOTHING));
             }
         }
     }
@@ -2864,7 +2830,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             if (dimension != null && !player.isPassenger()) {
                 Vec3 augmentedPos = new Vec3(targetPos.getX() + x, targetPos.getY() + y, targetPos.getZ() + z);
 
-                player.changeDimension(dimension, new ModTeleporter(augmentedPos));
+                player.changeDimension(new DimensionTransition(dimension, augmentedPos, Vec3.ZERO, player.getYRot(), player.getXRot(), DimensionTransition.DO_NOTHING));
             }
         }
     }

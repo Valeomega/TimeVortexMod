@@ -1,5 +1,6 @@
 package net.plaaasma.vortexmod.block.custom;
 
+import com.mojang.serialization.MapCodec;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
@@ -20,6 +21,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -31,6 +33,7 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.AttachFace;
@@ -53,8 +56,14 @@ import org.joml.Vector3f;
 import java.util.*;
 
 public class ThrottleBlock extends FaceAttachedHorizontalDirectionalBlock {
+    public static final MapCodec<ThrottleBlock> CODEC = BlockBehaviour.simpleCodec(ThrottleBlock::new);
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
     public static final BooleanProperty AUTO = ModBlockStateProperties.AUTO;
+
+    @Override
+    public MapCodec<ThrottleBlock> codec() {
+        return CODEC;
+    }
     protected static final VoxelShape NORTH_AABB = Block.box(5.5D, 5.0D, 11.0D, 10.5D, 11.0D, 16.0D);
     protected static final VoxelShape SOUTH_AABB = Block.box(5.5D, 5.0D, 0.0D, 10.5D, 11.0D, 5.0D);
     protected static final VoxelShape WEST_AABB = Block.box(11.0D, 5.0D, 5.5D, 16.0D, 11.0D, 10.5D);
@@ -128,8 +137,8 @@ public class ThrottleBlock extends FaceAttachedHorizontalDirectionalBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
-        if (pLevel.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHit) {
+        if (pLevel.isClientSide()) {
             if (pPlayer.isCrouching()) {
                 pState.cycle(AUTO);
             } else {
@@ -194,9 +203,9 @@ public class ThrottleBlock extends FaceAttachedHorizontalDirectionalBlock {
     }
 
     @Override
-    public void appendHoverText(ItemStack pStack, @Nullable BlockGetter pLevel, List<Component> pTooltip, TooltipFlag pFlag) {
+    public void appendHoverText(ItemStack pStack, Item.TooltipContext pContext, List<Component> pTooltip, TooltipFlag pFlag) {
         pTooltip.add(Component.translatable("tooltip.vortexmod.throttle_block.tooltip"));
-        super.appendHoverText(pStack, pLevel, pTooltip, pFlag);
+        super.appendHoverText(pStack, pContext, pTooltip, pFlag);
     }
 
     @Override

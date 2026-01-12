@@ -7,15 +7,16 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -25,6 +26,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.plaaasma.vortexmod.block.ModBlocks;
@@ -34,7 +36,6 @@ import net.plaaasma.vortexmod.block.entity.VortexInterfaceBlockEntity;
 import net.plaaasma.vortexmod.entities.custom.TardisEntity;
 import net.plaaasma.vortexmod.item.ModItems;
 import net.plaaasma.vortexmod.worldgen.dimension.ModDimensions;
-import net.plaaasma.vortexmod.worldgen.portal.ModTeleporter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -59,13 +60,25 @@ public class DoorBlock extends Block {
     }
 
     @Override
-    public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+    protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHit) {
+        return doUse(pState, pLevel, pPos, pPlayer, ItemStack.EMPTY, pHit);
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack pStack, BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+        InteractionResult result = doUse(pState, pLevel, pPos, pPlayer, pStack, pHit);
+        if (result.consumesAction()) {
+            return ItemInteractionResult.sidedSuccess(pLevel.isClientSide());
+        }
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    private InteractionResult doUse(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, ItemStack heldStack, BlockHitResult pHit) {
         if (pLevel instanceof ServerLevel serverLevel) {
             MinecraftServer minecraftserver = serverLevel.getServer();
             ServerLevel overworldDimension = minecraftserver.getLevel(Level.OVERWORLD);
             Iterable<ServerLevel> serverLevels = minecraftserver.getAllLevels();
             ServerLevel tardisDimension = minecraftserver.getLevel(ModDimensions.tardisDIM_LEVEL_KEY);
-            ItemStack heldStack = pPlayer.getItemInHand(pHand);
 
             if (serverLevel == tardisDimension) {
                 for (int x = -100; x <= 100; x++) {
@@ -115,11 +128,11 @@ public class DoorBlock extends Block {
                                             if (pPlayer.getVehicle() != null) {
                                                 Entity rootEntity = pPlayer.getRootVehicle();
                                                 rootEntity.setYRot(yaw + 180f);
-                                                rootEntity.changeDimension(targetDimension, new ModTeleporter(exitPosition));
+                                                rootEntity.changeDimension(new DimensionTransition(targetDimension, exitPosition, Vec3.ZERO, rootEntity.getYRot(), rootEntity.getXRot(), DimensionTransition.DO_NOTHING));
                                             }
                                             else {
                                                 pPlayer.setYRot(yaw + 180f);
-                                                pPlayer.changeDimension(targetDimension, new ModTeleporter(exitPosition));
+                                                pPlayer.changeDimension(new DimensionTransition(targetDimension, exitPosition, Vec3.ZERO, pPlayer.getYRot(), pPlayer.getXRot(), DimensionTransition.DO_NOTHING));
                                             }
                                         }
                                         else {
@@ -141,8 +154,8 @@ public class DoorBlock extends Block {
     }
 
     @Override
-    public void appendHoverText(ItemStack pStack, @Nullable BlockGetter pLevel, List<Component> pTooltip, TooltipFlag pFlag) {
+    public void appendHoverText(ItemStack pStack, Item.TooltipContext pContext, List<Component> pTooltip, TooltipFlag pFlag) {
         pTooltip.add(Component.translatable("tooltip.vortexmod.door_block.tooltip"));
-        super.appendHoverText(pStack, pLevel, pTooltip, pFlag);
+        super.appendHoverText(pStack, pContext, pTooltip, pFlag);
     }
 }

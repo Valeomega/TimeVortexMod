@@ -1,14 +1,15 @@
 package net.plaaasma.vortexmod.screen.custom.menu;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.items.SlotItemHandler;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.SlotItemHandler;
 import net.plaaasma.vortexmod.block.ModBlocks;
 import net.plaaasma.vortexmod.block.entity.ScannerBlockEntity;
 import net.plaaasma.vortexmod.screen.ModMenuTypes;
@@ -18,7 +19,7 @@ public class ScannerMenu extends AbstractContainerMenu {
     private final Level level;
     private final ContainerData data;
 
-    public ScannerMenu(int pContainerId, Inventory inv, FriendlyByteBuf extraData) {
+    public ScannerMenu(int pContainerId, Inventory inv, RegistryFriendlyByteBuf extraData) {
         this(pContainerId, inv, inv.player.level().getBlockEntity(extraData.readBlockPos()), new SimpleContainerData(1));
     }
 
@@ -32,14 +33,15 @@ public class ScannerMenu extends AbstractContainerMenu {
         //addPlayerInventory(inv);
         //addPlayerHotbar(inv);
 
-        this.blockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(iItemHandler -> {
-            this.addSlot(new SlotItemHandler(iItemHandler, 0, 36, 28));
-            this.addSlot(new SlotItemHandler(iItemHandler, 1, 16, 45));
-            this.addSlot(new SlotItemHandler(iItemHandler, 2, 56, 45));
-            this.addSlot(new SlotItemHandler(iItemHandler, 3, 16, 65));
-            this.addSlot(new SlotItemHandler(iItemHandler, 4, 56, 65));
-            this.addSlot(new SlotItemHandler(iItemHandler, 5, 36, 82));
-        });
+        IItemHandler itemHandler = this.blockEntity.getCapability(Capabilities.ItemHandler.BLOCK, null);
+        if (itemHandler != null) {
+            this.addSlot(new SlotItemHandler(itemHandler, 0, 36, 28));
+            this.addSlot(new SlotItemHandler(itemHandler, 1, 16, 45));
+            this.addSlot(new SlotItemHandler(itemHandler, 2, 56, 45));
+            this.addSlot(new SlotItemHandler(itemHandler, 3, 16, 65));
+            this.addSlot(new SlotItemHandler(itemHandler, 4, 56, 65));
+            this.addSlot(new SlotItemHandler(itemHandler, 5, 36, 82));
+        }
 
         addDataSlots(data);
     }

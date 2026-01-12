@@ -1,60 +1,83 @@
 package net.plaaasma.vortexmod.network;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.network.NetworkEvent;
-import net.plaaasma.vortexmod.block.ModBlocks;
-import net.plaaasma.vortexmod.block.entity.CoordinateDesignatorBlockEntity;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.plaaasma.vortexmod.block.entity.KeypadBlockEntity;
-import net.plaaasma.vortexmod.block.entity.VortexInterfaceBlockEntity;
+import net.plaaasma.vortexmod.VortexMod;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
-public class ClientboundTargetMapPacket {
-    private String dimension = "";
-    private final BlockPos targetPos;
-    private final Map<String, BlockPos> coordData;
-    private final Map<String, String> dimData;
+public record ClientboundTargetMapPacket(String dimension, BlockPos targetPos, Map<String, BlockPos> coordData, Map<String, String> dimData) implements CustomPacketPayload {
+    public static final Type<ClientboundTargetMapPacket> TYPE =
+            new Type<>(ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "clientbound_target_map"));
 
-    public ClientboundTargetMapPacket(String dimenison, BlockPos targetPos, Map<String, BlockPos> coordData, Map<String, String> dimData) {
-        this.dimension = dimenison;
-        this.targetPos = targetPos;
-        this.coordData = coordData;
-        this.dimData = dimData;
+    public static final StreamCodec<RegistryFriendlyByteBuf, ClientboundTargetMapPacket> STREAM_CODEC =
+            StreamCodec.of(ClientboundTargetMapPacket::encode, ClientboundTargetMapPacket::decode);
+
+    public static ClientboundTargetMapPacket decode(RegistryFriendlyByteBuf buffer) {
+        String dimension = buffer.readUtf();
+        BlockPos targetPos = buffer.readBlockPos();
+
+        int coordSize = buffer.readVarInt();
+        Map<String, BlockPos> coordData = new HashMap<>(coordSize);
+        for (int i = 0; i < coordSize; i++) {
+            coordData.put(buffer.readUtf(), buffer.readBlockPos());
+        }
+
+        int dimSize = buffer.readVarInt();
+        Map<String, String> dimData = new HashMap<>(dimSize);
+        for (int i = 0; i < dimSize; i++) {
+            dimData.put(buffer.readUtf(), buffer.readUtf());
+        }
+
+        return new ClientboundTargetMapPacket(
+                dimension,
+                targetPos,
+                coordData,
+                dimData
+        );
     }
 
-    public ClientboundTargetMapPacket(FriendlyByteBuf buffer) {
-        this(buffer.readUtf(), buffer.readBlockPos(), buffer.readMap(FriendlyByteBuf::readUtf, FriendlyByteBuf::readBlockPos), buffer.readMap(FriendlyByteBuf::readUtf, FriendlyByteBuf::readUtf));
+    public static void encode(RegistryFriendlyByteBuf buffer, ClientboundTargetMapPacket packet) {
+        buffer.writeUtf(packet.dimension);
+        buffer.writeBlockPos(packet.targetPos);
+
+        buffer.writeVarInt(packet.coordData.size());
+        for (Map.Entry<String, BlockPos> entry : packet.coordData.entrySet()) {
+            buffer.writeUtf(entry.getKey());
+            buffer.writeBlockPos(entry.getValue());
+        }
+
+        buffer.writeVarInt(packet.dimData.size());
+        for (Map.Entry<String, String> entry : packet.dimData.entrySet()) {
+            buffer.writeUtf(entry.getKey());
+            buffer.writeUtf(entry.getValue());
+        }
     }
 
-    public void encode(FriendlyByteBuf buffer) {
-        buffer.writeUtf(this.dimension);
-        buffer.writeBlockPos(this.targetPos);
-        buffer.writeMap(this.coordData, FriendlyByteBuf::writeUtf, FriendlyByteBuf::writeBlockPos);
-        buffer.writeMap(this.dimData, FriendlyByteBuf::writeUtf, FriendlyByteBuf::writeUtf);
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    public void handle(Supplier<NetworkEvent.ClientCustomPayloadEvent.Context> context) {
-        NetworkEvent.Context realContext = context.get();
+    public void handle(IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Minecraft client = Minecraft.getInstance();
+            ClientLevel clientLevel = client.level;
+            if (clientLevel == null) return;
 
-        Minecraft client = Minecraft.getInstance();
-        ClientLevel clientLevel = client.level;
-
-        KeypadBlockEntity keypadBlockEntity = (KeypadBlockEntity) clientLevel.getBlockEntity(this.targetPos);
-        keypadBlockEntity.coordData = this.coordData;
-        keypadBlockEntity.dimData = this.dimData;
-
-        realContext.setPacketHandled(true);
+            KeypadBlockEntity keypadBlockEntity = (KeypadBlockEntity) clientLevel.getBlockEntity(this.targetPos);
+            if (keypadBlockEntity != null) {
+                keypadBlockEntity.coordData = this.coordData;
+                keypadBlockEntity.dimData = this.dimData;
+            }
+        });
     }
 }

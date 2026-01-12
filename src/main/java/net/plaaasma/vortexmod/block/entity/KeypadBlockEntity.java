@@ -2,6 +2,7 @@ package net.plaaasma.vortexmod.block.entity;
 
 import net.minecraft.client.gui.screens.inventory.AnvilScreen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -13,9 +14,7 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
+import net.neoforged.neoforge.items.ItemStackHandler;
 import net.plaaasma.vortexmod.VortexMod;
 import net.plaaasma.vortexmod.screen.custom.menu.KeypadMenu;
 import net.plaaasma.vortexmod.screen.custom.menu.SizeManipulatorMenu;
@@ -25,8 +24,6 @@ import java.util.*;
 
 public class KeypadBlockEntity extends BlockEntity implements MenuProvider {
     public final ItemStackHandler itemHandler = new ItemStackHandler(1);
-
-    private LazyOptional<IItemHandler> lazyItemHandler = LazyOptional.empty();
 
     public final ContainerData data;
     private int is_active = 0;
@@ -71,20 +68,8 @@ public class KeypadBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     @Override
-    public void onLoad() {
-        super.onLoad();
-        lazyItemHandler = LazyOptional.of(() -> itemHandler);
-    }
-
-    @Override
-    public void invalidateCaps() {
-        super.invalidateCaps();
-        lazyItemHandler.invalidate();
-    }
-
-    @Override
-    public void load(CompoundTag pTag) {
-        super.load(pTag);
+    protected void loadAdditional(CompoundTag pTag, HolderLookup.Provider pRegistries) {
+        super.loadAdditional(pTag, pRegistries);
 
         CompoundTag vortexModData = pTag.getCompound(VortexMod.MODID);
 
@@ -92,8 +77,8 @@ public class KeypadBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag pTag) {
-        super.saveAdditional(pTag);
+    protected void saveAdditional(CompoundTag pTag, HolderLookup.Provider pRegistries) {
+        super.saveAdditional(pTag, pRegistries);
 
         CompoundTag vortexModData = new CompoundTag();
 

@@ -2,21 +2,29 @@ package net.plaaasma.vortexmod.network;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.plaaasma.vortexmod.VortexMod;
 import net.plaaasma.vortexmod.block.ModBlocks;
 import net.plaaasma.vortexmod.block.entity.CoordinateDesignatorBlockEntity;
 import net.plaaasma.vortexmod.block.entity.VortexInterfaceBlockEntity;
 import net.plaaasma.vortexmod.sound.ModSounds;
 
-import java.util.function.Supplier;
+public class ServerboundTargetPacket implements CustomPacketPayload {
+    public static final Type<ServerboundTargetPacket> TYPE =
+            new Type<>(ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "serverbound_target"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, ServerboundTargetPacket> STREAM_CODEC =
+            StreamCodec.of(ServerboundTargetPacket::encode, ServerboundTargetPacket::decode);
 
-public class ServerboundTargetPacket {
     private final BlockPos from_pos;
     private final String from_dimension;
     private final BlockPos to_pos;
@@ -33,23 +41,29 @@ public class ServerboundTargetPacket {
         this.targetScreen = targetScreen;
     }
 
-    public ServerboundTargetPacket(FriendlyByteBuf buffer) {
-        this(buffer.readBlockPos(), buffer.readUtf(), buffer.readBlockPos(), buffer.readInt(), buffer.readUtf(), buffer.readBoolean());
+    public static ServerboundTargetPacket decode(RegistryFriendlyByteBuf buffer) {
+        return new ServerboundTargetPacket(buffer.readBlockPos(), buffer.readUtf(), buffer.readBlockPos(), buffer.readInt(), buffer.readUtf(), buffer.readBoolean());
     }
 
-    public void encode(FriendlyByteBuf buffer) {
-        buffer.writeBlockPos(this.from_pos);
-        buffer.writeUtf(this.from_dimension);
-        buffer.writeBlockPos(this.to_pos);
-        buffer.writeInt(this.to_rotation);
-        buffer.writeUtf(this.to_dimension);
-        buffer.writeBoolean(this.targetScreen);
+    public static void encode(RegistryFriendlyByteBuf buffer, ServerboundTargetPacket packet) {
+        buffer.writeBlockPos(packet.from_pos);
+        buffer.writeUtf(packet.from_dimension);
+        buffer.writeBlockPos(packet.to_pos);
+        buffer.writeInt(packet.to_rotation);
+        buffer.writeUtf(packet.to_dimension);
+        buffer.writeBoolean(packet.targetScreen);
     }
 
-    public void handle(Supplier<NetworkEvent.ServerCustomPayloadEvent.Context> context) {
-        NetworkEvent.Context realContext = context.get();
-        if (this.targetScreen) {
-            MinecraftServer minecraftServer = realContext.getSender().getServer();
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
+
+    public void handle(IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (!(context.player() instanceof ServerPlayer sender)) return;
+            if (this.targetScreen) {
+                MinecraftServer minecraftServer = sender.getServer();
             ServerLevel level = null;
             ServerLevel toLevel = null;
             for (ServerLevel cLevel : minecraftServer.getAllLevels()) {
@@ -142,7 +156,7 @@ public class ServerboundTargetPacket {
 
                 vortexInterfaceBlockEntity.data.set(10, toDimension.hashCode());
 
-                realContext.getSender().displayClientMessage(Component.literal("Updating target coordinates to: ")
+                sender.displayClientMessage(Component.literal("Updating target coordinates to: ")
                         .append(Component.literal(x + " " + y + " " + z + "\n").withStyle(ChatFormatting.GOLD))
                         .append(Component.literal("Updating target rotation to: "))
                         .append(Component.literal(toRotation + "\n").withStyle(ChatFormatting.GOLD))
@@ -150,14 +164,13 @@ public class ServerboundTargetPacket {
                         .append(Component.literal(toDimension).withStyle(ChatFormatting.GOLD)), false);
             } else {
                 if (!core_found) {
-                    realContext.getSender().displayClientMessage(Component.literal("Core is not in range.").withStyle(ChatFormatting.RED), false);
+                    sender.displayClientMessage(Component.literal("Core is not in range.").withStyle(ChatFormatting.RED), false);
                 }
                 if (!has_components) {
-                    realContext.getSender().displayClientMessage(Component.literal("Coordinate components not in range. (Keypad and Designator)").withStyle(ChatFormatting.RED), false);
+                    sender.displayClientMessage(Component.literal("Coordinate components not in range. (Keypad and Designator)").withStyle(ChatFormatting.RED), false);
                 }
             }
-        }
-
-        realContext.setPacketHandled(true);
+            }
+        });
     }
 }

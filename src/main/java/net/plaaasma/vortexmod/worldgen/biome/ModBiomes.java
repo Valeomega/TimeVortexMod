@@ -4,7 +4,7 @@ import com.mojang.serialization.Codec;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BiomeDefaultFeatures;
-import net.minecraft.data.worldgen.BootstapContext;
+import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.data.worldgen.biome.OverworldBiomes;
 import net.minecraft.data.worldgen.placement.VegetationPlacements;
 import net.minecraft.resources.ResourceKey;
@@ -20,7 +20,6 @@ import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.carver.CaveCarverConfiguration;
 import net.minecraft.world.level.levelgen.carver.CaveWorldCarver;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
-import net.minecraftforge.common.world.BiomeSpecialEffectsBuilder;
 import net.plaaasma.vortexmod.VortexMod;
 import net.plaaasma.vortexmod.entities.ModEntities;
 import net.plaaasma.vortexmod.worldgen.ModConfiguredFeatures;
@@ -44,7 +43,7 @@ public class ModBiomes {
 
     }
 
-    public static void bootstrap(BootstapContext<Biome> context) {
+    public static void bootstrap(BootstrapContext<Biome> context) {
         context.register(BLUE_VORTEX_BIOME, vortexBiome(context, BiomeColor.BLUE));
         context.register(ORANGE_VORTEX_BIOME, vortexBiome(context, BiomeColor.ORANGE));
         context.register(PURPLE_VORTEX_BIOME, vortexBiome(context, BiomeColor.PURPLE));
@@ -56,7 +55,7 @@ public class ModBiomes {
         context.register(IRRADIATED_BADLANDS_BIOME, irradiatedDesert(context));
     }
 
-    public static Biome vortexBiome(BootstapContext<Biome> context, BiomeColor biomeColor) {
+    public static Biome vortexBiome(BootstrapContext<Biome> context, BiomeColor biomeColor) {
         MobSpawnSettings.Builder spawnBuilder = new MobSpawnSettings.Builder();
 
         BiomeGenerationSettings.Builder biomeBuilder =
@@ -98,7 +97,7 @@ public class ModBiomes {
                 .build();
     }
 
-    public static Biome tardisBiome(BootstapContext<Biome> context) {
+    public static Biome tardisBiome(BootstrapContext<Biome> context) {
         MobSpawnSettings.Builder spawnBuilder = new MobSpawnSettings.Builder();
 
         BiomeGenerationSettings.Builder biomeBuilder =
@@ -121,7 +120,7 @@ public class ModBiomes {
                 .build();
     }
 
-    public static Biome irradiatedForest(BootstapContext<Biome> context) {
+    public static Biome irradiatedForest(BootstrapContext<Biome> context) {
         BiomeGenerationSettings.Builder biomeGenerationSettings =
                 new BiomeGenerationSettings.Builder(context.lookup(Registries.PLACED_FEATURE), context.lookup(Registries.CONFIGURED_CARVER));
 
@@ -169,7 +168,7 @@ public class ModBiomes {
 
     }
 
-    public static Biome irradiatedDesert(BootstapContext<Biome> context) {
+    public static Biome irradiatedDesert(BootstrapContext<Biome> context) {
         BiomeGenerationSettings.Builder biomeGenerationSettings =
                 new BiomeGenerationSettings.Builder(context.lookup(Registries.PLACED_FEATURE), context.lookup(Registries.CONFIGURED_CARVER));
 

@@ -11,14 +11,12 @@ public class RenderUtil {
         VertexConsumer vertexBuilder = pBuffer.getBuffer(ModRenderType.getLineOfWidth(width));
         Matrix4f positionMatrix = pPoseStack.last().pose();
 
-        vertexBuilder.vertex(positionMatrix, startPoint.x(), startPoint.y(), startPoint.z())
-                .color(r, g, b, alpha)
-                .normal(1, 0, 0) // Adjusted normal for clarity
-                .endVertex();
+        vertexBuilder.addVertex(positionMatrix, startPoint.x(), startPoint.y(), startPoint.z())
+                .setColor(r, g, b, alpha)
+                .setNormal(1, 0, 0); // Adjusted normal for clarity
 
-        vertexBuilder.vertex(positionMatrix, endPoint.x(), endPoint.y(), endPoint.z())
-                .color(r, g, b, alpha)
-                .normal(1, 0, 0) // Adjusted normal for clarity
-                .endVertex();
+        vertexBuilder.addVertex(positionMatrix, endPoint.x(), endPoint.y(), endPoint.z())
+                .setColor(r, g, b, alpha)
+                .setNormal(1, 0, 0); // Adjusted normal for clarity
     }
 }

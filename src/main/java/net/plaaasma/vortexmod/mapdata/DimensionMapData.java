@@ -2,6 +2,7 @@ package net.plaaasma.vortexmod.mapdata;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
@@ -17,7 +18,7 @@ public class DimensionMapData extends SavedData {
     private final HashMap<String, String> dataMap = new HashMap<>();
 
     @Override
-    public CompoundTag save(CompoundTag pCompoundTag) {
+    public CompoundTag save(CompoundTag pCompoundTag, HolderLookup.Provider provider) {
         CompoundTag dataTag = new CompoundTag();
 
         for (Map.Entry<String, String> entry : dataMap.entrySet()) {
@@ -32,7 +33,7 @@ public class DimensionMapData extends SavedData {
         return dataMap;
     }
 
-    public static DimensionMapData load(CompoundTag pCompoundTag) {
+    public static DimensionMapData load(CompoundTag pCompoundTag, HolderLookup.Provider provider) {
         DimensionMapData savedData = new DimensionMapData();
         CompoundTag dataTag = pCompoundTag.getCompound(DATA_NAME);
         for (String key : dataTag.getAllKeys()) {
@@ -42,6 +43,6 @@ public class DimensionMapData extends SavedData {
     }
 
     public static DimensionMapData get(ServerLevel world) {
-        return world.getDataStorage().computeIfAbsent(DimensionMapData::load, DimensionMapData::new, DATA_NAME);
+        return world.getDataStorage().computeIfAbsent(new SavedData.Factory<>(DimensionMapData::new, DimensionMapData::load), DATA_NAME);
     }
 }

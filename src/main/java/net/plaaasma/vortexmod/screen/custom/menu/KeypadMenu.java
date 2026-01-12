@@ -1,15 +1,12 @@
 package net.plaaasma.vortexmod.screen.custom.menu;
 
-import net.minecraft.client.gui.screens.inventory.AnvilScreen;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.items.SlotItemHandler;
 import net.plaaasma.vortexmod.block.ModBlocks;
 import net.plaaasma.vortexmod.block.entity.KeypadBlockEntity;
 import net.plaaasma.vortexmod.screen.ModMenuTypes;
@@ -19,7 +16,7 @@ public class KeypadMenu extends AbstractContainerMenu {
     private final Level level;
     private final ContainerData data;
 
-    public KeypadMenu(int pContainerId, Inventory inv, FriendlyByteBuf extraData) {
+    public KeypadMenu(int pContainerId, Inventory inv, RegistryFriendlyByteBuf extraData) {
         this(pContainerId, inv, inv.player.level().getBlockEntity(extraData.readBlockPos()), new SimpleContainerData(1));
     }
 

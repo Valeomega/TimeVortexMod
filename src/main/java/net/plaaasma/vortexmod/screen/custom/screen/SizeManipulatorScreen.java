@@ -3,7 +3,6 @@ package net.plaaasma.vortexmod.screen.custom.screen;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.CommonComponents;
-import net.minecraftforge.client.RenderTypeHelper;
 import net.plaaasma.vortexmod.VortexMod;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;

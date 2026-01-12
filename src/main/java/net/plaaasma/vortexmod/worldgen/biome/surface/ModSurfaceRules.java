@@ -1,7 +1,6 @@
 package net.plaaasma.vortexmod.worldgen.biome.surface;
 
 import com.google.common.collect.ImmutableList;
-import mezz.jei.api.registration.IRecipeRegistration;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;

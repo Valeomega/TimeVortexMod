@@ -4,9 +4,9 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import net.plaaasma.vortexmod.VortexMod;
 import net.plaaasma.vortexmod.block.ModBlocks;
 
@@ -14,7 +14,7 @@ public class ModCreativeModeTabs {
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, VortexMod.MODID);
 
-    public static final RegistryObject<CreativeModeTab> VORTEX_MAIN_TAB = CREATIVE_MODE_TABS.register("vortex_main_tab",
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> VORTEX_MAIN_TAB = CREATIVE_MODE_TABS.register("vortex_main_tab",
             () -> CreativeModeTab.builder().icon(() -> new ItemStack(ModBlocks.INTERFACE_BLOCK.get()))
                     .title(Component.translatable("creativetab.vortex_main_tab"))
                     .displayItems((pParameters, pOutput) -> {
@@ -54,7 +54,7 @@ public class ModCreativeModeTabs {
                     })
                     .build());
 
-    public static final RegistryObject<CreativeModeTab> VORTEX_ROUNDELS_TAB = CREATIVE_MODE_TABS.register("vortex_roundel_tab",
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> VORTEX_ROUNDELS_TAB = CREATIVE_MODE_TABS.register("vortex_roundel_tab",
             () -> CreativeModeTab.builder().icon(() -> new ItemStack(ModBlocks.WARPED_ROUNDEL.get()))
                     .title(Component.translatable("creativetab.vortex_roundel_tab"))
                     .displayItems((pParameters, pOutput) -> {

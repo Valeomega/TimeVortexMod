@@ -1,41 +1,36 @@
 package net.plaaasma.vortexmod.block.custom;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.AttachFace;
-import net.minecraft.world.level.gameevent.GameEventListener;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.event.ServerChatEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.network.NetworkHooks;
+import com.mojang.serialization.MapCodec;
 import net.plaaasma.vortexmod.block.entity.ModBlockEntities;
 import net.plaaasma.vortexmod.block.entity.KeypadBlockEntity;
-import net.plaaasma.vortexmod.block.entity.SizeManipulatorBlockEntity;
 import net.plaaasma.vortexmod.mapdata.DimensionMapData;
 import net.plaaasma.vortexmod.mapdata.LocationMapData;
 import net.plaaasma.vortexmod.network.ClientboundDimListPacket;
@@ -47,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class KeypadBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
+    public static final MapCodec<KeypadBlock> CODEC = BlockBehaviour.simpleCodec(KeypadBlock::new);
+
     protected static final VoxelShape NORTH_AABB = Block.box(0, 0, 12, 16, 16, 16);
     protected static final VoxelShape SOUTH_AABB = Block.box(0, 0, 0, 16, 16, 4);
     protected static final VoxelShape WEST_AABB = Block.box(12, 0, 0, 16, 16, 16);
@@ -59,6 +56,11 @@ public class KeypadBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
     public KeypadBlock(Properties pProperties) {
         super(pProperties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.EAST));
+    }
+
+    @Override
+    public MapCodec<KeypadBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -120,7 +122,7 @@ public class KeypadBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
     }
 
     @Override
-    public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+    protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHit) {
         KeypadBlockEntity entity = (KeypadBlockEntity) pLevel.getBlockEntity(pPos);
 
         if (!pLevel.isClientSide()) {
@@ -152,7 +154,9 @@ public class KeypadBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
             PacketHandler.sendToAllClients(new ClientboundTargetMapPacket(pLevel.dimension().location().getPath(), pPos, entity.coordData, entity.dimData));
             PacketHandler.sendToAllClients(new ClientboundDimListPacket(pLevel.dimension().location().getPath(), pPos, levelMap));
 
-            NetworkHooks.openScreen((ServerPlayer) pPlayer, entity, pPos);
+            if (pPlayer instanceof ServerPlayer serverPlayer) {
+                serverPlayer.openMenu(entity, (RegistryFriendlyByteBuf buf) -> buf.writeBlockPos(pPos));
+            }
         }
 
         return InteractionResult.SUCCESS;
@@ -183,9 +187,9 @@ public class KeypadBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
     }
 
     @Override
-    public void appendHoverText(ItemStack pStack, @Nullable BlockGetter pLevel, List<Component> pTooltip, TooltipFlag pFlag) {
+    public void appendHoverText(ItemStack pStack, Item.TooltipContext pContext, List<Component> pTooltip, TooltipFlag pFlag) {
         pTooltip.add(Component.translatable("tooltip.vortexmod.keypad_block.tooltip"));
-        super.appendHoverText(pStack, pLevel, pTooltip, pFlag);
+        super.appendHoverText(pStack, pContext, pTooltip, pFlag);
     }
 
     @Override

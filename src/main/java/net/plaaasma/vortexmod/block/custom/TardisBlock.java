@@ -1,5 +1,6 @@
 package net.plaaasma.vortexmod.block.custom;
 
+import com.mojang.serialization.MapCodec;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,13 +18,13 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.BlockHitResult;
@@ -39,7 +40,6 @@ import net.plaaasma.vortexmod.item.custom.TardisKey;
 import net.plaaasma.vortexmod.mapdata.LocationMapData;
 import net.plaaasma.vortexmod.mapdata.SecurityMapData;
 import net.plaaasma.vortexmod.worldgen.dimension.ModDimensions;
-import net.plaaasma.vortexmod.worldgen.portal.ModTeleporter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -47,11 +47,17 @@ import java.util.List;
 import java.util.Set;
 
 public class TardisBlock extends HorizontalBaseEntityBlock {
+    public static final MapCodec<TardisBlock> CODEC = BlockBehaviour.simpleCodec(TardisBlock::new);
     public static final VoxelShape SHAPE = Block.box(-1, 0, -1, 17, 32, 17);
 
     public TardisBlock(Properties pProperties) {
         super(pProperties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.EAST));
+    }
+
+    @Override
+    public MapCodec<TardisBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -71,7 +77,7 @@ public class TardisBlock extends HorizontalBaseEntityBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+    protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHit) {
         if (pLevel instanceof ServerLevel serverLevel) {
             TardisBlockEntity blockEntity = (TardisBlockEntity) serverLevel.getBlockEntity(pPos);
 

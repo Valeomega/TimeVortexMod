@@ -39,7 +39,8 @@ import net.minecraft.world.level.block.LightBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.Tags;
+import net.minecraft.world.level.portal.DimensionTransition;
+import net.neoforged.neoforge.common.Tags;
 import net.plaaasma.vortexmod.VortexMod;
 import net.plaaasma.vortexmod.block.ModBlocks;
 import net.plaaasma.vortexmod.entities.ModEntities;
@@ -47,7 +48,6 @@ import net.plaaasma.vortexmod.item.ModItems;
 import net.plaaasma.vortexmod.mapdata.LocationMapData;
 import net.plaaasma.vortexmod.mapdata.SecurityMapData;
 import net.plaaasma.vortexmod.worldgen.dimension.ModDimensions;
-import net.plaaasma.vortexmod.worldgen.portal.ModTeleporter;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -122,23 +122,23 @@ public class TardisEntity extends Mob {
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(DATA_OWNERID_ID, 0);
-        this.entityData.define(DATA_LOCKED_ID, false);
-        this.entityData.define(DATA_HAS_BIO_SECURITY_ID, false);
-        this.entityData.define(DATA_IN_FLIGHT_ID, false);
-        this.entityData.define(DATA_DEMAT_ID, false);
-        this.entityData.define(DATA_REMAT_ID, false);
-        this.entityData.define(DATA_ANIM_STAGE_ID, 0);
-        this.entityData.define(DATA_ANIM_DESCENDING_ID, false);
-        this.entityData.define(DATA_ALPHA_ID, 1f);
-        this.entityData.define(DATA_LEVEL_ID, "fartland");
-        this.entityData.define(DATA_TARGET_X_ID, 0f);
-        this.entityData.define(DATA_TARGET_Y_ID, 0f);
-        this.entityData.define(DATA_TARGET_Z_ID, 0f);
-        this.entityData.define(DATA_ROTATION_ID, 0);
-        this.entityData.define(DATA_SIGN_ID, "Police -=- Box");
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_OWNERID_ID, 0);
+        builder.define(DATA_LOCKED_ID, false);
+        builder.define(DATA_HAS_BIO_SECURITY_ID, false);
+        builder.define(DATA_IN_FLIGHT_ID, false);
+        builder.define(DATA_DEMAT_ID, false);
+        builder.define(DATA_REMAT_ID, false);
+        builder.define(DATA_ANIM_STAGE_ID, 0);
+        builder.define(DATA_ANIM_DESCENDING_ID, false);
+        builder.define(DATA_ALPHA_ID, 1f);
+        builder.define(DATA_LEVEL_ID, "fartland");
+        builder.define(DATA_TARGET_X_ID, 0f);
+        builder.define(DATA_TARGET_Y_ID, 0f);
+        builder.define(DATA_TARGET_Z_ID, 0f);
+        builder.define(DATA_ROTATION_ID, 0);
+        builder.define(DATA_SIGN_ID, "Police -=- Box");
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -388,11 +388,11 @@ public class TardisEntity extends Mob {
                                 if (pPlayer.getVehicle() != null) {
                                     Entity rootEntity = pPlayer.getRootVehicle();
                                     rootEntity.setYRot(playerRotation);
-                                    rootEntity.changeDimension(dimension, new ModTeleporter(tardisTarget));
+                                    rootEntity.changeDimension(new DimensionTransition(dimension, tardisTarget, Vec3.ZERO, rootEntity.getYRot(), rootEntity.getXRot(), DimensionTransition.DO_NOTHING));
                                 }
                                 else {
                                     pPlayer.setYRot(playerRotation);
-                                    pPlayer.changeDimension(dimension, new ModTeleporter(tardisTarget));
+                                    pPlayer.changeDimension(new DimensionTransition(dimension, tardisTarget, Vec3.ZERO, pPlayer.getYRot(), pPlayer.getXRot(), DimensionTransition.DO_NOTHING));
                                 }
                             } else {
                                 pPlayer.displayClientMessage(Component.literal("You are not whitelisted in this TARDIS").withStyle(ChatFormatting.RED), true);

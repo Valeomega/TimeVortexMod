@@ -1,5 +1,6 @@
 package net.plaaasma.vortexmod.block.custom;
 
+import com.mojang.serialization.MapCodec;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -9,6 +10,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -16,11 +18,11 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.FaceAttachedHorizontalDirectionalBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.AttachFace;
@@ -35,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class BiometricBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
+    public static final MapCodec<BiometricBlock> CODEC = BlockBehaviour.simpleCodec(BiometricBlock::new);
+
     protected static final VoxelShape NORTH_AABB = Block.box(0, 0, 12, 16, 16, 16);
     protected static final VoxelShape SOUTH_AABB = Block.box(0, 0, 0, 16, 16, 4);
     protected static final VoxelShape WEST_AABB = Block.box(12, 0, 0, 16, 16, 16);
@@ -47,6 +51,11 @@ public class BiometricBlock extends FaceAttachedHorizontalDirectionalBlockEntity
     public BiometricBlock(Properties pProperties) {
         super(pProperties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.EAST));
+    }
+
+    @Override
+    public MapCodec<BiometricBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -108,7 +117,7 @@ public class BiometricBlock extends FaceAttachedHorizontalDirectionalBlockEntity
     }
 
     @Override
-    public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+    protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHit) {
         if (!pLevel.isClientSide()) {
             pPlayer.displayClientMessage(Component.literal("Use the '/tardis security blacklist (player)' and '/tardis security whitelist (player)' commands to add and remove people from the whitelist.").withStyle(ChatFormatting.AQUA), false);
         }
@@ -141,9 +150,9 @@ public class BiometricBlock extends FaceAttachedHorizontalDirectionalBlockEntity
     }
 
     @Override
-    public void appendHoverText(ItemStack pStack, @Nullable BlockGetter pLevel, List<Component> pTooltip, TooltipFlag pFlag) {
+    public void appendHoverText(ItemStack pStack, Item.TooltipContext pContext, List<Component> pTooltip, TooltipFlag pFlag) {
         pTooltip.add(Component.translatable("tooltip.vortexmod.biometric_module.tooltip"));
-        super.appendHoverText(pStack, pLevel, pTooltip, pFlag);
+        super.appendHoverText(pStack, pContext, pTooltip, pFlag);
     }
 
     @Override
