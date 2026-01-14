@@ -7,12 +7,14 @@ import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import net.plaaasma.vortexmod.VortexMod;
 import net.plaaasma.vortexmod.entities.ModEntities;
 import net.plaaasma.vortexmod.entities.custom.*;
 import net.plaaasma.vortexmod.network.PacketHandler;
+import net.plaaasma.vortexmod.worldgen.ModWorldGen;
 
 @EventBusSubscriber(modid = VortexMod.MODID, bus = EventBusSubscriber.Bus.MOD)
 public class ModEventBusEvents {
@@ -67,4 +69,5 @@ public class ModEventBusEvents {
                 RegisterSpawnPlacementsEvent.Operation.AND
         );
     }
+
 }

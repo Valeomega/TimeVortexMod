@@ -183,7 +183,7 @@ public class LostTravelerEntity extends AbstractVillager {
         super.readAdditionalSaveData(compound);
 
         if (compound.contains("WanderTarget")) {
-            this.wanderTarget = NbtUtils.readBlockPos(compound.getCompound("WanderTarget"));
+            this.wanderTarget = NbtUtils.readBlockPos(compound, "WanderTarget").orElse(null);
         }
 
         this.setAge(Math.max(0, this.getAge()));

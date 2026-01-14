@@ -23,14 +23,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 
-public class ModChunkGenerator extends ChunkGenerator {
+public abstract class ModChunkGenerator extends ChunkGenerator {
     public ModChunkGenerator(BiomeSource pBiomeSource, Function<Holder<Biome>, BiomeGenerationSettings> pGenerationSettingsGetter) {
         super(pBiomeSource, pGenerationSettingsGetter);
-    }
-
-    @Override
-    protected Codec<? extends ChunkGenerator> codec() {
-        return null;
     }
 
     @Override
@@ -51,11 +46,6 @@ public class ModChunkGenerator extends ChunkGenerator {
     @Override
     public int getGenDepth() {
         return 0;
-    }
-
-    @Override
-    public CompletableFuture<ChunkAccess> fillFromNoise(Executor pExecutor, Blender pBlender, RandomState pRandom, StructureManager pStructureManager, ChunkAccess pChunk) {
-        return null;
     }
 
     @Override

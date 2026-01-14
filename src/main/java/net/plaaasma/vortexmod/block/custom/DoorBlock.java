@@ -112,7 +112,7 @@ public class DoorBlock extends Block {
                                             pPlayer.displayClientMessage(Component.literal("This TARDIS is not yours.").withStyle(ChatFormatting.RED), true);
                                         }
                                     } else {
-                                        if (!tardisEntity.isRemat() && !tardisEntity.isInFlight() && !tardisEntity.isDemat() && tardisEntity.getAlpha() > 0) {
+                                        if (!tardisEntity.isRemat() && !tardisEntity.isInFlight() && !tardisEntity.isDemat() && tardisEntity.getAlpha() >= 0.01f) {
                                             int yaw = (int) tardisEntity.getYRot();
                                             Vec3 exitPosition;
 

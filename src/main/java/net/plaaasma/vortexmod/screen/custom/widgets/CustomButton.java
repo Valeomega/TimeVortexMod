@@ -128,10 +128,11 @@ public class CustomButton extends AbstractButton {
         pGuiGraphics.setColor(1.0F, 1.0F, 1.0F, this.alpha);
         RenderSystem.enableBlend();
         RenderSystem.enableDepthTest();
-        pGuiGraphics.m_280027_(new ResourceLocation(VortexMod.MODID, "textures/gui/widgets.png"), this.getX(), this.getY(), this.getWidth(), this.getHeight(), 20, 4, 200, 20, 0, this.shouldDoBorder());
+        ResourceLocation texture = ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "textures/gui/widgets.png");
+        pGuiGraphics.blit(texture, this.getX(), this.getY(), 20, this.shouldDoBorder(), this.getWidth(), this.getHeight(), 200, 20);
         pGuiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         int i = getFGColor();
-        this.m_280139_(pGuiGraphics, minecraft.font, i | Mth.ceil(this.alpha * 255.0F) << 24);
+        this.renderString(pGuiGraphics, minecraft.font, i | Mth.ceil(this.alpha * 255.0F) << 24);
     }
 
     public interface CreateNarration {

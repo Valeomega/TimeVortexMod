@@ -31,6 +31,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.plaaasma.vortexmod.block.custom.VortexInterfaceBlock;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.AABB;
@@ -319,8 +320,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                 tardisEntity.setSignText(signText);
             }
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
@@ -376,8 +376,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             }
 
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
@@ -444,14 +443,11 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
         Direction rotationDirection;
         if (rotation_yaw >= 0 && rotation_yaw < 90) {
             rotationDirection = Direction.NORTH;
-        }
-        else if (rotation_yaw >= 90 && rotation_yaw < 180) {
+        } else if (rotation_yaw >= 90 && rotation_yaw < 180) {
             rotationDirection = Direction.EAST;
-        }
-        else if (rotation_yaw >= 180 && rotation_yaw < 270) {
+        } else if (rotation_yaw >= 180 && rotation_yaw < 270) {
             rotationDirection = Direction.SOUTH;
-        }
-        else {
+        } else {
             rotationDirection = Direction.WEST;
         }
 
@@ -473,7 +469,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             }
         }
 
-        BlockState targetState = targetDimension.getBlockState(new BlockPos(this.data.get(3), this.data.get(4), this.data.get(5)));
+        BlockState targetState = targetDimension
+                .getBlockState(new BlockPos(this.data.get(3), this.data.get(4), this.data.get(5)));
 
         return targetState.getBlock().getName().getString();
     }
@@ -495,14 +492,14 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
             this.data.set(0, this.data.get(0) + 1);
 
-            if (pLevel.dimension() != vortexDimension.dimension() && pLevel.dimension() != tardisDimension.dimension()) {
+            if (pLevel.dimension() != vortexDimension.dimension()
+                    && pLevel.dimension() != tardisDimension.dimension()) {
                 int dimId = pLevel.dimension().location().getPath().hashCode();
                 this.data.set(9, dimId);
                 if (this.data.get(10) == 0) {
                     this.data.set(10, dimId);
                 }
-            }
-            else {
+            } else {
                 if (this.data.get(10) == 0) {
                     this.data.set(10, overworldDimension.dimension().location().getPath().hashCode());
                 }
@@ -538,15 +535,15 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
             if (tardisEntity == null) {
                 tardisEntity = (TardisEntity) currentDimension.getEntity(this.exterior_uuid);
-            }
-            else {
+            } else {
                 currentDimension = (ServerLevel) tardisEntity.level();
             }
 
             if (tardisEntity == null) {
                 AABB searchBB = AABB.ofSize(new Vec3(this.data.get(6), this.data.get(7), this.data.get(8)), 8, 8, 8);
 
-                List<Entity> nearbyEntities = currentDimension.getEntitiesOfClass(Entity.class, searchBB, entity -> !(entity instanceof Player));
+                List<Entity> nearbyEntities = currentDimension.getEntitiesOfClass(Entity.class, searchBB,
+                        entity -> !(entity instanceof Player));
                 List<TardisEntity> nearbyTardisEntities = new ArrayList<>();
                 for (Entity entity : nearbyEntities) {
                     if (entity instanceof TardisEntity newTardisEntity) {
@@ -596,8 +593,10 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
                         if (blockEntity instanceof SizeManipulatorBlockEntity sizeManipulatorBlockEntity) {
                             size += sizeManipulatorBlockEntity.data.get(0);
-                            if ((sizeManipulatorBlockEntity.getAlphaPos() != null && sizeManipulatorBlockEntity.getBetaPos() != null)) {
-                                overrideAABB = new AABB(Vec3.atLowerCornerOf(sizeManipulatorBlockEntity.getAlphaPos()), Vec3.atLowerCornerOf(sizeManipulatorBlockEntity.getBetaPos()));
+                            if ((sizeManipulatorBlockEntity.getAlphaPos() != null
+                                    && sizeManipulatorBlockEntity.getBetaPos() != null)) {
+                                overrideAABB = new AABB(Vec3.atLowerCornerOf(sizeManipulatorBlockEntity.getAlphaPos()),
+                                        Vec3.atLowerCornerOf(sizeManipulatorBlockEntity.getBetaPos()));
                                 if (overrideAABB.getSize() == 0) {
                                     overrideAABB = null;
                                 }
@@ -614,11 +613,9 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
                 if (xDif > yDif && xDif > zDif) {
                     biggestDifference = xDif;
-                }
-                else if (yDif > xDif && yDif > zDif) {
+                } else if (yDif > xDif && yDif > zDif) {
                     biggestDifference = yDif;
-                }
-                else {
+                } else {
                     biggestDifference = zDif;
                 }
 
@@ -671,8 +668,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                         ((ThrottleBlock) blockState.getBlock()).pull(blockState, pLevel, currentPos);
                                     }
                                     this.data.set(13, 0);
-                                }
-                                else if (this.data.get(13) == 2) {
+                                } else if (this.data.get(13) == 2) {
                                     throttle_on = 0;
                                     if (blockState.getValue(ThrottleBlock.POWERED)) {
                                         ((ThrottleBlock) blockState.getBlock()).pull(blockState, pLevel, currentPos);
@@ -692,8 +688,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                             targetZ = designatorBlockEntity.data.get(2);
                                         }
 
-                                    }
-                                    else {
+                                    } else {
                                         targetX = designatorBlockEntity.data.get(0);
                                         targetY = designatorBlockEntity.data.get(1);
                                         targetZ = designatorBlockEntity.data.get(2);
@@ -720,8 +715,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                         }
                     }
                 }
-            }
-            else {
+            } else {
                 for (int x = (int) overrideAABB.minX; x <= (int) overrideAABB.maxX; x++) {
                     for (int y = (int) overrideAABB.minY; y <= (int) overrideAABB.maxY; y++) {
                         for (int z = (int) overrideAABB.minZ; z <= (int) overrideAABB.maxZ; z++) {
@@ -752,8 +746,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                         ((ThrottleBlock) blockState.getBlock()).pull(blockState, pLevel, currentPos);
                                     }
                                     this.data.set(13, 0);
-                                }
-                                else if (this.data.get(13) == 2) {
+                                } else if (this.data.get(13) == 2) {
                                     throttle_on = 0;
                                     if (blockState.getValue(ThrottleBlock.POWERED)) {
                                         ((ThrottleBlock) blockState.getBlock()).pull(blockState, pLevel, currentPos);
@@ -848,12 +841,16 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             targetY = temp_target.getY();
             targetZ = temp_target.getZ();
             if (overrideAABB != null) {
-                if (targetY >= (targetDimension.dimensionType().minY() + targetDimension.dimensionType().height()) - (overrideAABB.maxY + 16)) {
-                    targetY = (int) ((targetDimension.dimensionType().minY() + targetDimension.dimensionType().height()) - (overrideAABB.maxY + 16));
+                if (targetY >= (targetDimension.dimensionType().minY() + targetDimension.dimensionType().height())
+                        - (overrideAABB.maxY + 16)) {
+                    targetY = (int) ((targetDimension.dimensionType().minY() + targetDimension.dimensionType().height())
+                            - (overrideAABB.maxY + 16));
                 }
             } else {
-                if (targetY >= (targetDimension.dimensionType().minY() + targetDimension.dimensionType().height()) - (y_size + (y_size - 1))) {
-                    targetY = (targetDimension.dimensionType().minY() + targetDimension.dimensionType().height()) - (y_size + (y_size - 1)) - 1;
+                if (targetY >= (targetDimension.dimensionType().minY() + targetDimension.dimensionType().height())
+                        - (y_size + (y_size - 1))) {
+                    targetY = (targetDimension.dimensionType().minY() + targetDimension.dimensionType().height())
+                            - (y_size + (y_size - 1)) - 1;
                 }
             }
             if (targetY <= targetDimension.dimensionType().minY() + 1) {
@@ -887,8 +884,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                         monitorBlockEntity.data.set(8, tardisEntity.getBlockZ());
                         monitorBlockEntity.data.set(9, (int) tardisEntity.getYRot());
                     }
-                }
-                else {
+                } else {
                     monitorBlockEntity.current_dimension = currentDimension.dimension().location().getPath();
                     monitorBlockEntity.data.set(6, this.data.get(6));
                     monitorBlockEntity.data.set(7, this.data.get(7));
@@ -921,9 +917,12 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                         for (int y = -1; y <= y_size + (y_size - 1); y++) {
                             for (int z = -size; z <= size; z++) {
                                 BlockPos currentPos = pPos.offset(x, y, z);
-                                Player player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(), 1, false);
+                                Player player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(),
+                                        currentPos.getZ(), 1, false);
                                 if (player != null) {
-                                    player.displayClientMessage(Component.literal("Out of energy, throttle has been disabled! Charge your TARDIS using FE or simply by waiting. Use the monitor to watch your energy levels.").withStyle(ChatFormatting.RED), false);
+                                    player.displayClientMessage(Component.literal(
+                                            "Out of energy, throttle has been disabled! Charge your TARDIS using FE or simply by waiting. Use the monitor to watch your energy levels.")
+                                            .withStyle(ChatFormatting.RED), false);
                                 }
                             }
                         }
@@ -942,7 +941,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
                 BlockPos estimatePos = exteriorPos;
                 int numEstJumps = 0;
-                while (Math.sqrt(estimatePos.distToCenterSqr(realTargetPos.getX(), estimatePos.getY(), realTargetPos.getZ())) > 250) {
+                while (Math.sqrt(estimatePos.distToCenterSqr(realTargetPos.getX(), estimatePos.getY(),
+                        realTargetPos.getZ())) > 250) {
                     numEstJumps++;
                     estimatePos = findNewVortexPosition(estimatePos, realTargetPos);
                 }
@@ -951,7 +951,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
                 BlockPos remainingPos = pPos;
                 int numRemJumps = 0;
-                while (Math.sqrt(remainingPos.distToCenterSqr(realTargetPos.getX(), remainingPos.getY(), realTargetPos.getZ())) > 250) {
+                while (Math.sqrt(remainingPos.distToCenterSqr(realTargetPos.getX(), remainingPos.getY(),
+                        realTargetPos.getZ())) > 250) {
                     numRemJumps++;
                     remainingPos = findNewVortexPosition(remainingPos, realTargetPos);
                 }
@@ -979,28 +980,52 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     if (this.data.get(0) > this.data.get(1) + (dematSeconds * tickSpeed) && pLevel != vortexDimension) {
                         BlockPos vortexTargetPos = findNewVortexPosition(pPos, realTargetPos);
                         vortexTargetPos = new BlockPos(vortexTargetPos.getX(), -100, vortexTargetPos.getZ());
-//                        if (Math.sqrt(exteriorPos.distToCenterSqr(targetX, pPos.getY(), targetZ)) <= 10000) {
-//                            this.data.set(6, this.data.get(6) + 10000);
-//                            this.data.set(8, this.data.get(8) + 10000);
-//                            vortexTargetPos = vortexTargetPos.offset(10000, 0, 10000);
-//                        }
+                        // if (Math.sqrt(exteriorPos.distToCenterSqr(targetX, pPos.getY(), targetZ)) <=
+                        // 10000) {
+                        // this.data.set(6, this.data.get(6) + 10000);
+                        // this.data.set(8, this.data.get(8) + 10000);
+                        // vortexTargetPos = vortexTargetPos.offset(10000, 0, 10000);
+                        // }
 
                         this.data.set(1, this.data.get(0));
                         ChunkPos chunkPos = vortexDimension.getChunkAt(vortexTargetPos).getPos();
-                        // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
+                        try {
+                            VortexInterfaceBlock.getTicketController().forceChunk(vortexDimension, vortexTargetPos,
+                                    chunkPos.x, chunkPos.z, true, true);
+                        } catch (Exception e) {
+                            VortexMod.LOGGER.warn("Failed to force chunk: {}", e.getMessage());
+                        }
                         handleVortexTeleports(size, overrideAABB, pLevel, pPos, vortexTargetPos);
                         chunkPos = currentDimension.getChunkAt(pPos).getPos();
-                        // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
-                        vortexDimension.playSeededSound(null, vortexTargetPos.getX(), vortexTargetPos.getY(), vortexTargetPos.getZ(), ModSounds.FLIGHT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
-                    } else if (pLevel == vortexDimension && Math.sqrt(pPos.distToCenterSqr(targetX, pPos.getY(), targetZ)) <= 250 && this.data.get(0) >= (tickSpeed * minFlightSeconds) + this.data.get(1)) {
+                        try {
+                            VortexInterfaceBlock.getTicketController().forceChunk(currentDimension, pPos, chunkPos.x,
+                                    chunkPos.z, true, true);
+                        } catch (Exception e) {
+                            VortexMod.LOGGER.warn("Failed to force chunk: {}", e.getMessage());
+                        }
+                        vortexDimension.playSeededSound(null, vortexTargetPos.getX(), vortexTargetPos.getY(),
+                                vortexTargetPos.getZ(), ModSounds.FLIGHT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
+                    } else if (pLevel == vortexDimension
+                            && Math.sqrt(pPos.distToCenterSqr(targetX, pPos.getY(), targetZ)) <= 250
+                            && this.data.get(0) >= (tickSpeed * minFlightSeconds) + this.data.get(1)) {
                         BlockPos flight_target = new BlockPos(targetX, targetY, targetZ);
                         this.data.set(1, this.data.get(0));
                         this.data.set(11, 0);
                         ChunkPos chunkPos = targetDimension.getChunkAt(flight_target).getPos();
-                        // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
+                        try {
+                            VortexInterfaceBlock.getTicketController().forceChunk(targetDimension, flight_target,
+                                    chunkPos.x, chunkPos.z, true, true);
+                        } catch (Exception e) {
+                            VortexMod.LOGGER.warn("Failed to force chunk: {}", e.getMessage());
+                        }
                         handleTeleports(size, overrideAABB, vortexDimension, targetDimension, pPos, flight_target);
                         chunkPos = currentDimension.getChunkAt(pPos).getPos();
-                        // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
+                        try {
+                            VortexInterfaceBlock.getTicketController().forceChunk(currentDimension, pPos, chunkPos.x,
+                                    chunkPos.z, true, true);
+                        } catch (Exception e) {
+                            VortexMod.LOGGER.warn("Failed to force chunk: {}", e.getMessage());
+                        }
                         this.data.set(6, targetX);
                         this.data.set(7, targetY);
                         this.data.set(8, targetZ);
@@ -1008,61 +1033,81 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     }
                     if (pLevel != vortexDimension) {
                         if (this.data.get(0) == this.data.get(1) + 1) {
-                            pLevel.playSeededSound(null, pPos.getX(), pPos.getY(), pPos.getZ(), ModSounds.DEMAT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
+                            pLevel.playSeededSound(null, pPos.getX(), pPos.getY(), pPos.getZ(),
+                                    ModSounds.DEMAT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
                         }
                         handleDematParticles(size, overrideAABB, pLevel, pPos);
                     }
                     if (pLevel == vortexDimension && this.data.get(0) > 0) {
-                        if ((Math.sqrt(pPos.distToCenterSqr(targetX, pPos.getY(), targetZ)) <= 0.3 * Math.sqrt(exteriorPos.distToCenterSqr(targetX, exteriorPos.getY(), targetZ)) || (Math.sqrt(pPos.distToCenterSqr(targetX, pPos.getY(), targetZ)) <= 250)) && this.data.get(11) == 0) {
-                            targetDimension.playSeededSound(null, targetX, targetY, targetZ, ModSounds.REMAT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
+                        if ((Math.sqrt(pPos.distToCenterSqr(targetX, pPos.getY(), targetZ)) <= 0.3
+                                * Math.sqrt(exteriorPos.distToCenterSqr(targetX, exteriorPos.getY(), targetZ))
+                                || (Math.sqrt(pPos.distToCenterSqr(targetX, pPos.getY(), targetZ)) <= 250))
+                                && this.data.get(11) == 0) {
+                            targetDimension.playSeededSound(null, targetX, targetY, targetZ,
+                                    ModSounds.REMAT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
                             this.data.set(11, 1);
                         }
-                        if (this.data.get(0) % (4 * tickSpeed) == 0 && this.data.get(0) > this.data.get(1) + (4 * tickSpeed)) {
+                        if (this.data.get(0) % (4 * tickSpeed) == 0
+                                && this.data.get(0) > this.data.get(1) + (4 * tickSpeed)) {
                             BlockPos newTarget = findNewVortexPosition(pPos, new BlockPos(targetX, targetY, targetZ));
-                            if (Math.sqrt(newTarget.distToCenterSqr(pPos.getX(), pPos.getY(), pPos.getZ())) > size * 1.25) {
+                            if (Math.sqrt(newTarget.distToCenterSqr(pPos.getX(), pPos.getY(), pPos.getZ())) > size
+                                    * 1.25) {
                                 ChunkPos chunkPos = vortexDimension.getChunkAt(newTarget).getPos();
-                                // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
+                                try {
+                                    VortexInterfaceBlock.getTicketController().forceChunk(vortexDimension, newTarget,
+                                            chunkPos.x, chunkPos.z, true, true);
+                                } catch (Exception e) {
+                                    VortexMod.LOGGER.warn("Failed to force chunk: {}", e.getMessage());
+                                }
                                 handleVortex2VortexTeleports(size, overrideAABB, pLevel, pPos, newTarget);
                                 ChunkPos newChunkPos = vortexDimension.getChunkAt(pPos).getPos();
                                 if (newChunkPos != chunkPos) {
-                                    // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
-                                    vortexDimension.playSeededSound(null, newTarget.getX(), newTarget.getY(), newTarget.getZ(), ModSounds.FLIGHT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
+                                    // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's
+                                    // TicketController API.
+                                    vortexDimension.playSeededSound(null, newTarget.getX(), newTarget.getY(),
+                                            newTarget.getZ(), ModSounds.FLIGHT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f,
+                                            0);
                                 }
                             }
                         }
-                        if ((Math.sqrt(pPos.distToCenterSqr(targetX, pPos.getY(), targetZ)) <= 0.3 * Math.sqrt(exteriorPos.distToCenterSqr(targetX, exteriorPos.getY(), targetZ))) || (Math.sqrt(pPos.distToCenterSqr(targetX, pPos.getY(), targetZ)) <= 250)) {
-                            handleRematParticles(size, overrideAABB, targetDimension, new BlockPos(targetX, targetY, targetZ));
+                        if ((Math.sqrt(pPos.distToCenterSqr(targetX, pPos.getY(), targetZ)) <= 0.3
+                                * Math.sqrt(exteriorPos.distToCenterSqr(targetX, exteriorPos.getY(), targetZ)))
+                                || (Math.sqrt(pPos.distToCenterSqr(targetX, pPos.getY(), targetZ)) <= 250)) {
+                            handleRematParticles(size, overrideAABB, targetDimension,
+                                    new BlockPos(targetX, targetY, targetZ));
                             if (this.data.get(0) % (4 * tickSpeed) == 0) {
                                 if (!has_equalizer) {
                                     handleLightningStrikes(targetDimension, new BlockPos(targetX, targetY, targetZ));
                                 }
-                                if (random.nextDouble() < 0.005) {  // Spawn rift
-                                    RiftEntity riftEntity = ModEntities.RIFT.get().spawn(targetDimension, new BlockPos(targetX + random.nextInt(-64, 64), targetY, targetZ + random.nextInt(-64, 64)), MobSpawnType.NATURAL);
+                                if (random.nextDouble() < 0.005) { // Spawn rift
+                                    RiftEntity riftEntity = ModEntities.RIFT
+                                            .get().spawn(
+                                                    targetDimension, new BlockPos(targetX + random.nextInt(-64, 64),
+                                                            targetY, targetZ + random.nextInt(-64, 64)),
+                                                    MobSpawnType.NATURAL);
                                     targetDimension.addFreshEntity(riftEntity);
                                 }
                             }
                         }
                         handleVortexParticles(size, vortexDimension, pPos, new BlockPos(targetX, targetY, targetZ));
                     }
-                }
-                else {
+                } else {
                     this.data.set(21, 0);
                     if (monitorBlockEntity != null) {
                         monitorBlockEntity.data.set(5, 0);
                     }
-                    if (currentDimension.dimension().location().getPath().equals(vortexDimension.dimension().location().getPath())) {
+                    if (currentDimension.dimension().location().getPath()
+                            .equals(vortexDimension.dimension().location().getPath())) {
                         if (this.data.get(0) % 2 == 0) {
                             this.energy.addEnergy(2);
                         }
-                    }
-                    else {
+                    } else {
                         if (this.data.get(0) % 2 == 0) {
                             this.energy.addEnergy(1);
                         }
                     }
                 }
-            }
-            else { // Non Euclidean TARDIS Logic
+            } else { // Non Euclidean TARDIS Logic
                 if (tardisEntity != null) {
                     this.data.set(6, tardisEntity.getBlockX());
                     this.data.set(7, tardisEntity.getBlockY());
@@ -1086,7 +1131,9 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
                     int tick_step = 150;
                     double intermediate_seconds = 1.8;
-                    intermediate_seconds += (Math.sqrt(exteriorPos.distToCenterSqr(target.getX(), exteriorPos.getY(), target.getZ())) / tick_step) / tickSpeed;
+                    intermediate_seconds += (Math.sqrt(
+                            exteriorPos.distToCenterSqr(target.getX(), exteriorPos.getY(), target.getZ())) / tick_step)
+                            / tickSpeed;
                     if (intermediate_seconds > 180) {
                         intermediate_seconds = 180;
                     }
@@ -1117,8 +1164,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     if (throttle_on == 1) {
                         if (this.data.get(0) >= this.data.get(1) + ticks_to_travel) {
                             this.data.set(24, 1);
-                        }
-                        else {
+                        } else {
                             this.data.set(24, 0);
                         }
 
@@ -1128,14 +1174,17 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                             this.energy.removeEnergy(1);
                             tardisEntity.setInFlight(false);
                             handleDematCenterParticles(tardisDimension, pPos);
-                            //handleEucDematParticles(currentDimension, exteriorPos);
+                            // handleEucDematParticles(currentDimension, exteriorPos);
                             for (int x = -size; x <= size; x++) {
                                 for (int y = -1; y <= y_size + (y_size - 1); y++) {
                                     for (int z = -size; z <= size; z++) {
                                         BlockPos currentPos = pPos.offset(x, y, z);
-                                        Player player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(), 1, false);
+                                        Player player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(),
+                                                currentPos.getZ(), 1, false);
                                         if (player != null) {
-                                            player.displayClientMessage(Component.literal("Dematerializing").withStyle(ChatFormatting.RED), true);
+                                            player.displayClientMessage(
+                                                    Component.literal("Dematerializing").withStyle(ChatFormatting.RED),
+                                                    true);
                                         }
                                     }
                                 }
@@ -1151,7 +1200,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                                 BlockState blockState = pLevel.getBlockState(currentPos);
                                                 if (blockState.getBlock() instanceof ThrottleBlock) {
                                                     if (blockState.getValue(BlockStateProperties.POWERED)) {
-                                                        ((ThrottleBlock) blockState.getBlock()).pull(blockState, pLevel, currentPos);
+                                                        ((ThrottleBlock) blockState.getBlock()).pull(blockState, pLevel,
+                                                                currentPos);
                                                     }
                                                 }
                                             }
@@ -1161,20 +1211,27 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                 if (this.data.get(0) % 2 == 0) {
                                     this.energy.addEnergy(2);
                                 }
-                            }
-                            else {
+                            } else {
                                 this.energy.removeEnergy(1);
                             }
 
                             tardisEntity.setNoGravity(true);
 
                             ChunkPos chunkPos = currentDimension.getChunkAt(exteriorPos).getPos();
-                            // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
+                            try {
+                                VortexInterfaceBlock.getTicketController().forceChunk(currentDimension, exteriorPos,
+                                        chunkPos.x, chunkPos.z, true, true);
+                            } catch (Exception e) {
+                                VortexMod.LOGGER.warn("Failed to force chunk: {}", e.getMessage());
+                            }
 
-                            tardisEntity.teleportToWithTicket(currentDimension, exteriorPos.getX() + 0.5, -128.0, exteriorPos.getZ() + 0.5, tardisEntity.getYRot(), tardisEntity.getXRot());
-                            if (this.data.get(0) >= this.data.get(1) + demat_time + 1 && (this.data.get(0) - (this.data.get(1) + demat_time) > 0)) {
+                            tardisEntity.teleportToWithTicket(currentDimension, exteriorPos.getX() + 0.5, -128.0,
+                                    exteriorPos.getZ() + 0.5, tardisEntity.getYRot(), tardisEntity.getXRot());
+                            if (this.data.get(0) >= this.data.get(1) + demat_time + 1
+                                    && (this.data.get(0) - (this.data.get(1) + demat_time) > 0)) {
                                 if (this.data.get(0) >= this.data.get(22) + (tickSpeed * 1.35)) {
-                                    pLevel.playSeededSound(null, pPos.getX(), pPos.getY(), pPos.getZ(), ModSounds.EUC_FLIGHT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
+                                    pLevel.playSeededSound(null, pPos.getX(), pPos.getY(), pPos.getZ(),
+                                            ModSounds.EUC_FLIGHT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
                                     this.data.set(22, this.data.get(0));
                                 }
                             }
@@ -1182,33 +1239,47 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                 for (int y = -1; y <= y_size + (y_size - 1); y++) {
                                     for (int z = -size; z <= size; z++) {
                                         BlockPos currentPos = pPos.offset(x, y, z);
-                                        Player player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(), 1, false);
+                                        Player player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(),
+                                                currentPos.getZ(), 1, false);
                                         if (player != null) {
                                             if (this.data.get(0) >= this.data.get(1) + ticks_to_travel) {
-                                                player.displayClientMessage(Component.literal("Pull the throttle to land.").withStyle(ChatFormatting.AQUA).append(Component.literal(" (Shift click the throttle to toggle auto land)").withStyle(ChatFormatting.GRAY)), true);
+                                                player.displayClientMessage(Component
+                                                        .literal("Pull the throttle to land.")
+                                                        .withStyle(ChatFormatting.AQUA)
+                                                        .append(Component.literal(
+                                                                " (Shift click the throttle to toggle auto land)")
+                                                                .withStyle(ChatFormatting.GRAY)),
+                                                        true);
                                             } else {
-                                                player.displayClientMessage(Component.literal("Flight time remaining: ").withStyle(ChatFormatting.GRAY).append(Component.literal(String.format("%.2f", time_remaining)).withStyle(ChatFormatting.GOLD)), true);
+                                                player.displayClientMessage(Component.literal("Flight time remaining: ")
+                                                        .withStyle(ChatFormatting.GRAY)
+                                                        .append(Component.literal(String.format("%.2f", time_remaining))
+                                                                .withStyle(ChatFormatting.GOLD)),
+                                                        true);
                                             }
                                         }
                                     }
                                 }
                             }
                             handleFlightCenterParticles(tardisDimension, pPos);
-                        }
-                        else {
+                        } else {
                             if (!tardisEntity.isRemat()) {
                                 this.data.set(1, this.data.get(0));
                                 tardisEntity.setDemat(true);
-                                currentDimension.playSeededSound(null, exteriorPos.getX(), exteriorPos.getY(), exteriorPos.getZ(), ModSounds.DEMAT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
-                                pLevel.playSeededSound(null, pPos.getX(), pPos.getY(), pPos.getZ(), ModSounds.DEMAT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
-                            }
-                            else {
+                                currentDimension.playSeededSound(null, exteriorPos.getX(), exteriorPos.getY(),
+                                        exteriorPos.getZ(), ModSounds.DEMAT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
+                                pLevel.playSeededSound(null, pPos.getX(), pPos.getY(), pPos.getZ(),
+                                        ModSounds.DEMAT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
+                            } else {
                                 this.data.set(21, 15);
                                 tardisEntity.setInFlight(false);
                                 if (!has_equalizer && this.data.get(0) % (4 * tickSpeed) == 0) {
                                     handleLightningStrikes(targetDimension, new BlockPos(targetX, targetY, targetZ));
-                                    if (random.nextDouble() < 0.005) {  // Spawn rift
-                                        RiftEntity riftEntity = ModEntities.RIFT.get().spawn(targetDimension, new BlockPos(targetX + random.nextInt(-64, 64), targetY, targetZ + random.nextInt(-64, 64)), MobSpawnType.NATURAL);
+                                    if (random.nextDouble() < 0.005) { // Spawn rift
+                                        RiftEntity riftEntity = ModEntities.RIFT.get().spawn(
+                                                targetDimension, new BlockPos(targetX + random.nextInt(-64, 64),
+                                                        targetY, targetZ + random.nextInt(-64, 64)),
+                                                MobSpawnType.NATURAL);
                                         targetDimension.addFreshEntity(riftEntity);
                                     }
                                 }
@@ -1217,23 +1288,24 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                     for (int y = -1; y <= y_size + (y_size - 1); y++) {
                                         for (int z = -size; z <= size; z++) {
                                             BlockPos currentPos = pPos.offset(x, y, z);
-                                            Player player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(), 1, false);
+                                            Player player = pLevel.getNearestPlayer(currentPos.getX(),
+                                                    currentPos.getY(), currentPos.getZ(), 1, false);
                                             if (player != null) {
-                                                player.displayClientMessage(Component.literal("Rematerializing").withStyle(ChatFormatting.AQUA), true);
+                                                player.displayClientMessage(Component.literal("Rematerializing")
+                                                        .withStyle(ChatFormatting.AQUA), true);
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
-                    else {
-                        if (currentDimension.dimension().location().getPath().equals(vortexDimension.dimension().location().getPath())) {
+                    } else {
+                        if (currentDimension.dimension().location().getPath()
+                                .equals(vortexDimension.dimension().location().getPath())) {
                             if (this.data.get(0) % 2 == 0) {
                                 this.energy.addEnergy(2);
                             }
-                        }
-                        else {
+                        } else {
                             if (this.data.get(0) % 2 == 0) {
                                 this.energy.addEnergy(1);
                             }
@@ -1244,8 +1316,12 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                             tardisEntity.setInFlight(false);
                             if (!has_equalizer && this.data.get(0) % (4 * tickSpeed) == 0) {
                                 handleLightningStrikes(targetDimension, new BlockPos(targetX, targetY, targetZ));
-                                if (random.nextDouble() < 0.005) {  // Spawn rift
-                                    RiftEntity riftEntity = ModEntities.RIFT.get().spawn(targetDimension, new BlockPos(targetX + random.nextInt(-64, 64), targetY, targetZ + random.nextInt(-64, 64)), MobSpawnType.NATURAL);
+                                if (random.nextDouble() < 0.005) { // Spawn rift
+                                    RiftEntity riftEntity = ModEntities.RIFT
+                                            .get().spawn(
+                                                    targetDimension, new BlockPos(targetX + random.nextInt(-64, 64),
+                                                            targetY, targetZ + random.nextInt(-64, 64)),
+                                                    MobSpawnType.NATURAL);
                                     targetDimension.addFreshEntity(riftEntity);
                                 }
                             }
@@ -1254,9 +1330,12 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                 for (int y = -1; y <= y_size + (y_size - 1); y++) {
                                     for (int z = -size; z <= size; z++) {
                                         BlockPos currentPos = pPos.offset(x, y, z);
-                                        Player player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(), 1, false);
+                                        Player player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(),
+                                                currentPos.getZ(), 1, false);
                                         if (player != null) {
-                                            player.displayClientMessage(Component.literal("Rematerializing").withStyle(ChatFormatting.AQUA), true);
+                                            player.displayClientMessage(
+                                                    Component.literal("Rematerializing").withStyle(ChatFormatting.AQUA),
+                                                    true);
                                         }
                                     }
                                 }
@@ -1267,8 +1346,10 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
                                 tardisEntity.setRemat(true);
 
-                                targetDimension.playSeededSound(null, targetX, targetY, targetZ, ModSounds.REMAT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
-                                pLevel.playSeededSound(null, pPos.getX(), pPos.getY(), pPos.getZ(), ModSounds.REMAT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
+                                targetDimension.playSeededSound(null, targetX, targetY, targetZ,
+                                        ModSounds.REMAT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
+                                pLevel.playSeededSound(null, pPos.getX(), pPos.getY(), pPos.getZ(),
+                                        ModSounds.REMAT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
 
                                 BlockPos flight_target = new BlockPos(targetX, targetY, targetZ);
                                 if (this.data.get(0) < this.data.get(1) + ticks_to_travel) {
@@ -1283,7 +1364,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                     int x_distance = Math.abs(exteriorPos.getX() - targetX);
                                     int z_distance = Math.abs(exteriorPos.getZ() - targetZ);
 
-                                    double percentage_travelled = (this.data.get(0) - this.data.get(1)) / ticks_to_travel;
+                                    double percentage_travelled = (this.data.get(0) - this.data.get(1))
+                                            / ticks_to_travel;
 
                                     // Calculate the new position
                                     int newX = exteriorPos.getX() + (int) (dirX * (x_distance * percentage_travelled));
@@ -1293,13 +1375,20 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                 }
                                 tardisEntity.setYRot(rotation_yaw);
                                 tardisEntity.setNoGravity(false);
-                                tardisEntity.teleportToWithTicket(targetDimension, flight_target.getX() + 0.5, flight_target.getY(), flight_target.getZ() + 0.5, rotation_yaw, 0);
-                                if (!targetDimension.dimension().location().getPath().equals(currentDimension.dimension().location().getPath())) {
+                                tardisEntity.teleportToWithTicket(targetDimension, flight_target.getX() + 0.5,
+                                        flight_target.getY(), flight_target.getZ() + 0.5, rotation_yaw, 0);
+                                if (!targetDimension.dimension().location().getPath()
+                                        .equals(currentDimension.dimension().location().getPath())) {
                                     targetDimension.addFreshEntity(tardisEntity);
                                 }
                                 tardisEntity.tick();
                                 ChunkPos chunkPos = targetDimension.getChunkAt(flight_target).getPos();
-                                // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
+                                try {
+                                    VortexInterfaceBlock.getTicketController().forceChunk(targetDimension,
+                                            flight_target, chunkPos.x, chunkPos.z, true, true);
+                                } catch (Exception e) {
+                                    VortexMod.LOGGER.warn("Failed to force chunk: {}", e.getMessage());
+                                }
                                 for (int x = -size; x <= size; x++) {
                                     for (int y = -1; y <= y_size + (y_size - 1); y++) {
                                         for (int z = -size; z <= size; z++) {
@@ -1307,19 +1396,20 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                             BlockState blockState = pLevel.getBlockState(currentPos);
                                             if (blockState.getBlock() instanceof ThrottleBlock) {
                                                 if (blockState.getValue(BlockStateProperties.POWERED)) {
-                                                    ((ThrottleBlock) blockState.getBlock()).pull(blockState, pLevel, currentPos);
+                                                    ((ThrottleBlock) blockState.getBlock()).pull(blockState, pLevel,
+                                                            currentPos);
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
-                        else {
+                        } else {
                             this.data.set(21, 0);
                             if (this.data.get(23) == 0) {
                                 BlockPos flight_target = new BlockPos(targetX, targetY, targetZ);
-                                handleLandingEntities(targetDimension, tardisDimension, flight_target, this.getExtUUID());
+                                handleLandingEntities(targetDimension, tardisDimension, flight_target,
+                                        this.getExtUUID());
                                 this.data.set(6, targetX);
                                 this.data.set(7, targetY);
                                 this.data.set(8, targetZ);
@@ -1332,9 +1422,14 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                     for (int y = -1; y <= y_size + (y_size - 1); y++) {
                                         for (int z = -size; z <= size; z++) {
                                             BlockPos currentPos = pPos.offset(x, y, z);
-                                            ServerPlayer player = (ServerPlayer) pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(), 1, false);
+                                            ServerPlayer player = (ServerPlayer) pLevel.getNearestPlayer(
+                                                    currentPos.getX(), currentPos.getY(), currentPos.getZ(), 1, false);
                                             if (player != null) {
-                                                player.displayClientMessage(Component.literal("TARDIS Landed at: ").withStyle(ChatFormatting.GRAY).append(Component.literal(exteriorPos.getX() + " " + exteriorPos.getY() + " " + exteriorPos.getZ())), true);
+                                                player.displayClientMessage(Component.literal("TARDIS Landed at: ")
+                                                        .withStyle(ChatFormatting.GRAY)
+                                                        .append(Component.literal(exteriorPos.getX() + " "
+                                                                + exteriorPos.getY() + " " + exteriorPos.getZ())),
+                                                        true);
                                             }
                                         }
                                     }
@@ -1342,13 +1437,17 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                             }
                         }
                     }
-                }
-                else {
+                } else {
                     this.data.set(0, this.data.get(0) - 1);
 
                     BlockPos exteriorPos = new BlockPos(this.data.get(6), this.data.get(7), this.data.get(8));
                     ChunkPos chunkPos = currentDimension.getChunkAt(exteriorPos).getPos();
-                    // TODO(NeoForge 1.21.1): Port forced chunk loading to NeoForge's TicketController API.
+                    try {
+                        VortexInterfaceBlock.getTicketController().forceChunk(currentDimension, exteriorPos, chunkPos.x,
+                                chunkPos.z, true, true);
+                    } catch (Exception e) {
+                        VortexMod.LOGGER.warn("Failed to force chunk: {}", e.getMessage());
+                    }
                 }
             }
             doDisruption(temp_target, disruptorDataMap, random, pLevel, pPos, size, y_size, this.data.get(2));
@@ -1357,13 +1456,15 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
         }
     }
 
-    private void doDisruption(BlockPos temp_target, HashMap<String, Integer> disruptorDataMap, Random random, Level pLevel, BlockPos pPos, int size, int y_size, int owner) {
+    private void doDisruption(BlockPos temp_target, HashMap<String, Integer> disruptorDataMap, Random random,
+            Level pLevel, BlockPos pPos, int size, int y_size, int owner) {
         ChunkPos targetChunk = new ChunkPos(temp_target);
         boolean disrupted = false;
         if (disruptorDataMap.containsKey(targetChunk.toString())) {
             if (disruptorDataMap.get(targetChunk.toString()) != owner) {
                 while (disruptorDataMap.containsKey(targetChunk.toString())) {
-                    temp_target = new BlockPos(temp_target.getX() + random.nextInt(-20, 20), temp_target.getY(), temp_target.getZ() + random.nextInt(-20, 20));
+                    temp_target = new BlockPos(temp_target.getX() + random.nextInt(-20, 20), temp_target.getY(),
+                            temp_target.getZ() + random.nextInt(-20, 20));
 
                     targetChunk = new ChunkPos(temp_target);
                     setCoordsJ(temp_target);
@@ -1375,10 +1476,15 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                         for (int y = -1; y <= y_size + (y_size - 1); y++) {
                             for (int z = -size; z <= size; z++) {
                                 BlockPos currentPos = pPos.offset(x, y, z);
-                                Player player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(), 1, false);
+                                Player player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(),
+                                        currentPos.getZ(), 1, false);
                                 if (player != null && !messagedPlayers.contains(player)) {
                                     messagedPlayers.add(player);
-                                    player.displayClientMessage(Component.literal("Your target destination was disrupted! Your target is now: " + temp_target.getX() + "," + temp_target.getY() + "," + temp_target.getZ()).withStyle(ChatFormatting.RED), false);
+                                    player.displayClientMessage(Component
+                                            .literal("Your target destination was disrupted! Your target is now: "
+                                                    + temp_target.getX() + "," + temp_target.getY() + ","
+                                                    + temp_target.getZ())
+                                            .withStyle(ChatFormatting.RED), false);
                                 }
                             }
                         }
@@ -1395,7 +1501,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             ServerLevel overworld = minecraftserver.getLevel(Level.OVERWORLD);
             LocationMapData data = LocationMapData.get(overworld);
             BlockPos blockTardisTarget = data.getDataMap().get(uuid.toString());
-            Vec3 tardisTarget = new Vec3(blockTardisTarget.getX() + 1.5, blockTardisTarget.getY(), blockTardisTarget.getZ() + 0.5);
+            Vec3 tardisTarget = new Vec3(blockTardisTarget.getX() + 1.5, blockTardisTarget.getY(),
+                    blockTardisTarget.getZ() + 0.5);
             boolean found_door = false;
             for (int x = -100; x <= 100 && !found_door; x++) {
                 for (int y = -1; y <= 100 && !found_door; y++) {
@@ -1427,8 +1534,10 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                     z_offset = -0.5;
                                 }
 
-                                if (pLevel.getBlockState(newPos) == Blocks.AIR.defaultBlockState() && pLevel.getBlockState(newPos.above()) == Blocks.AIR.defaultBlockState()) {
-                                    tardisTarget = new Vec3(currentPos.getX() + x_offset, currentPos.getY(), currentPos.getZ() + z_offset);
+                                if (pLevel.getBlockState(newPos) == Blocks.AIR.defaultBlockState()
+                                        && pLevel.getBlockState(newPos.above()) == Blocks.AIR.defaultBlockState()) {
+                                    tardisTarget = new Vec3(currentPos.getX() + x_offset, currentPos.getY(),
+                                            currentPos.getZ() + z_offset);
                                     break;
                                 }
                             }
@@ -1439,17 +1548,21 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                 }
             }
             if (!found_door) {
-                BlockPos doorTarget = new BlockPos((int) (tardisTarget.x - 1.5), (int) tardisTarget.y, (int) (tardisTarget.z - 0.5));
+                BlockPos doorTarget = new BlockPos((int) (tardisTarget.x - 1.5), (int) tardisTarget.y,
+                        (int) (tardisTarget.z - 0.5));
 
                 serverLevel.setBlockAndUpdate(doorTarget, ModBlocks.DOOR_BLOCK.get().defaultBlockState());
             }
 
-            player.changeDimension(new DimensionTransition((ServerLevel) pLevel, tardisTarget, Vec3.ZERO, player.getYRot(), player.getXRot(), DimensionTransition.DO_NOTHING));
+            player.changeDimension(new DimensionTransition((ServerLevel) pLevel, tardisTarget, Vec3.ZERO,
+                    player.getYRot(), player.getXRot(), DimensionTransition.DO_NOTHING));
         }
 
-        AABB searchBB = new AABB(target.getX() - 1, target.getY() - 1, target.getZ() - 1, target.getX() + 1, target.getY() + 1, target.getZ() + 1);
+        AABB searchBB = new AABB(target.getX() - 1, target.getY() - 1, target.getZ() - 1, target.getX() + 1,
+                target.getY() + 1, target.getZ() + 1);
 
-        List<Entity> nearbyEntities = serverLevel.getEntitiesOfClass(Entity.class, searchBB, entity -> !(entity instanceof Player));
+        List<Entity> nearbyEntities = serverLevel.getEntitiesOfClass(Entity.class, searchBB,
+                entity -> !(entity instanceof Player));
 
         for (Entity nearbyEntity : nearbyEntities) {
             if (!(nearbyEntity instanceof TardisEntity) && !(nearbyEntity instanceof RiftEntity)) {
@@ -1457,7 +1570,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                 ServerLevel overworld = minecraftserver.getLevel(Level.OVERWORLD);
                 LocationMapData data = LocationMapData.get(overworld);
                 BlockPos blockTardisTarget = data.getDataMap().get(uuid.toString());
-                Vec3 tardisTarget = new Vec3(blockTardisTarget.getX() + 1.5, blockTardisTarget.getY(), blockTardisTarget.getZ() + 0.5);
+                Vec3 tardisTarget = new Vec3(blockTardisTarget.getX() + 1.5, blockTardisTarget.getY(),
+                        blockTardisTarget.getZ() + 0.5);
                 boolean found_door = false;
                 for (int x = -100; x <= 100 && !found_door; x++) {
                     for (int y = -1; y <= 100 && !found_door; y++) {
@@ -1489,8 +1603,10 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                         z_offset = -0.5;
                                     }
 
-                                    if (pLevel.getBlockState(newPos) == Blocks.AIR.defaultBlockState() && pLevel.getBlockState(newPos.above()) == Blocks.AIR.defaultBlockState()) {
-                                        tardisTarget = new Vec3(currentPos.getX() + x_offset, currentPos.getY(), currentPos.getZ() + z_offset);
+                                    if (pLevel.getBlockState(newPos) == Blocks.AIR.defaultBlockState()
+                                            && pLevel.getBlockState(newPos.above()) == Blocks.AIR.defaultBlockState()) {
+                                        tardisTarget = new Vec3(currentPos.getX() + x_offset, currentPos.getY(),
+                                                currentPos.getZ() + z_offset);
                                         break;
                                     }
                                 }
@@ -1501,12 +1617,14 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     }
                 }
                 if (!found_door) {
-                    BlockPos doorTarget = new BlockPos((int) (tardisTarget.x - 1.5), (int) tardisTarget.y, (int) (tardisTarget.z - 0.5));
+                    BlockPos doorTarget = new BlockPos((int) (tardisTarget.x - 1.5), (int) tardisTarget.y,
+                            (int) (tardisTarget.z - 0.5));
 
                     serverLevel.setBlockAndUpdate(doorTarget, ModBlocks.DOOR_BLOCK.get().defaultBlockState());
                 }
 
-                nearbyEntity.changeDimension(new DimensionTransition((ServerLevel) pLevel, tardisTarget, Vec3.ZERO, nearbyEntity.getYRot(), nearbyEntity.getXRot(), DimensionTransition.DO_NOTHING));
+                nearbyEntity.changeDimension(new DimensionTransition((ServerLevel) pLevel, tardisTarget, Vec3.ZERO,
+                        nearbyEntity.getYRot(), nearbyEntity.getXRot(), DimensionTransition.DO_NOTHING));
             }
         }
     }
@@ -1515,17 +1633,15 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
         Direction rotationDirection;
         if (rotationYaw >= 0 && rotationYaw < 90) {
             rotationDirection = Direction.NORTH;
-        }
-        else if (rotationYaw >= 90 && rotationYaw < 180) {
+        } else if (rotationYaw >= 90 && rotationYaw < 180) {
             rotationDirection = Direction.EAST;
-        }
-        else if (rotationYaw >= 180 && rotationYaw < 270) {
+        } else if (rotationYaw >= 180 && rotationYaw < 270) {
             rotationDirection = Direction.SOUTH;
-        }
-        else {
+        } else {
             rotationDirection = Direction.WEST;
         }
-        pLevel.setBlockAndUpdate(target, ModBlocks.TARDIS_BLOCK.get().defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, rotationDirection));
+        pLevel.setBlockAndUpdate(target, ModBlocks.TARDIS_BLOCK.get().defaultBlockState()
+                .setValue(BlockStateProperties.HORIZONTAL_FACING, rotationDirection));
     }
 
     public static void handleTardisDeletion(ServerLevel pLevel, BlockPos target) {
@@ -1590,10 +1706,10 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     rotatedX,
                     rotatedY + (length / 2f),
                     rotatedZ,
-                    xVel, yVel, zVel, 0.025F, 1
-            );
+                    xVel, yVel, zVel, 0.025F, 1);
             if (pConnection.isConnected()) {
-                if (pConnection.getPacketListener().isAcceptingMessages() && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
+                if (pConnection.getPacketListener().isAcceptingMessages()
+                        && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
                     pConnection.send(particlesPacket);
                 }
             }
@@ -1657,10 +1773,10 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     rotatedX,
                     rotatedY + (length / 2f),
                     rotatedZ,
-                    xVel, yVel, zVel, 0.025F, 1
-            );
+                    xVel, yVel, zVel, 0.025F, 1);
             if (pConnection.isConnected()) {
-                if (pConnection.getPacketListener().isAcceptingMessages() && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
+                if (pConnection.getPacketListener().isAcceptingMessages()
+                        && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
                     pConnection.send(particlesPacket);
                 }
             }
@@ -1724,10 +1840,10 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     rotatedX,
                     rotatedY + (length / 2f),
                     rotatedZ,
-                    xVel, yVel, zVel, 0.025F, 1
-            );
+                    xVel, yVel, zVel, 0.025F, 1);
             if (pConnection.isConnected()) {
-                if (pConnection.getPacketListener().isAcceptingMessages() && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
+                if (pConnection.getPacketListener().isAcceptingMessages()
+                        && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
                     pConnection.send(particlesPacket);
                 }
             }
@@ -1814,21 +1930,21 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                 zVel = random.nextInt(3) - 1;
                                 yVel = 0;
                                 break; // Top face
-// Bottom face
+                            // Bottom face
                             case 2:
                             case 3:
                                 yVel = random.nextInt(3) - 1;
                                 zVel = random.nextInt(3) - 1;
                                 xVel = 0;
                                 break; // Right face
-// Left face
+                            // Left face
                             case 4:
                             case 5:
                                 yVel = random.nextInt(3) - 1;
                                 xVel = random.nextInt(3) - 1;
                                 zVel = 0;
                                 break; // Front face
-// Back face
+                            // Back face
                         }
 
                         double newX = center.getX() + (radius * x);
@@ -1844,20 +1960,21 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                 newX + 0.5,
                                 newY,
                                 newZ + 0.5,
-                                xVel, yVel, zVel, 0, 1
-                        );
+                                xVel, yVel, zVel, 0, 1);
                         if (pConnection.isConnected()) {
-                            if (pConnection.getPacketListener().isAcceptingMessages() && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
+                            if (pConnection.getPacketListener().isAcceptingMessages()
+                                    && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
                                 pConnection.send(particlesPacket);
                             }
                         }
                     }
                 }
             }
-        }
-        else {
-            BlockPos corner1 = new BlockPos(center.getX() + (int) overrideAABB.minX, center.getY()+ (int) overrideAABB.minY, center.getZ() + (int) overrideAABB.minZ);
-            BlockPos corner2 = new BlockPos(center.getX() + (int) overrideAABB.maxX, center.getY() + (int) overrideAABB.maxY, center.getZ() + (int) overrideAABB.maxZ);
+        } else {
+            BlockPos corner1 = new BlockPos(center.getX() + (int) overrideAABB.minX,
+                    center.getY() + (int) overrideAABB.minY, center.getZ() + (int) overrideAABB.minZ);
+            BlockPos corner2 = new BlockPos(center.getX() + (int) overrideAABB.maxX,
+                    center.getY() + (int) overrideAABB.maxY, center.getZ() + (int) overrideAABB.maxZ);
 
             int xLength = Math.abs(corner1.getX() - corner2.getX());
             int yLength = Math.abs(corner1.getY() - corner2.getY());
@@ -1867,8 +1984,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             BlockPos minCorner = new BlockPos(
                     Math.min(corner1.getX(), corner2.getX()),
                     Math.min(corner1.getY(), corner2.getY()),
-                    Math.min(corner1.getZ(), corner2.getZ())
-            );
+                    Math.min(corner1.getZ(), corner2.getZ()));
             // Iterate over the edges of the cuboid
             for (int x = 0; x <= xLength + 1; x++) {
                 for (int y = 0; y <= yLength + 1; y++) {
@@ -1917,10 +2033,10 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                     minCorner.getX() + x,
                                     minCorner.getY() + y,
                                     minCorner.getZ() + z,
-                                    xVel, yVel, zVel, 0, 1
-                            );
+                                    xVel, yVel, zVel, 0, 1);
                             if (pConnection.isConnected()) {
-                                if (pConnection.getPacketListener().isAcceptingMessages() && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
+                                if (pConnection.getPacketListener().isAcceptingMessages()
+                                        && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
                                     pConnection.send(particlesPacket);
                                 }
                             }
@@ -2034,20 +2150,21 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                 newX + 0.5,
                                 newY,
                                 newZ + 0.5,
-                                xVel, yVel, zVel, 0, 1
-                        );
+                                xVel, yVel, zVel, 0, 1);
                         if (pConnection.isConnected()) {
-                            if (pConnection.getPacketListener().isAcceptingMessages() && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
+                            if (pConnection.getPacketListener().isAcceptingMessages()
+                                    && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
                                 pConnection.send(particlesPacket);
                             }
                         }
                     }
                 }
             }
-        }
-        else {
-            BlockPos corner1 = new BlockPos(center.getX() + (int) overrideAABB.minX, center.getY()+ (int) overrideAABB.minY, center.getZ() + (int) overrideAABB.minZ);
-            BlockPos corner2 = new BlockPos(center.getX() + (int) overrideAABB.maxX, center.getY() + (int) overrideAABB.maxY, center.getZ() + (int) overrideAABB.maxZ);
+        } else {
+            BlockPos corner1 = new BlockPos(center.getX() + (int) overrideAABB.minX,
+                    center.getY() + (int) overrideAABB.minY, center.getZ() + (int) overrideAABB.minZ);
+            BlockPos corner2 = new BlockPos(center.getX() + (int) overrideAABB.maxX,
+                    center.getY() + (int) overrideAABB.maxY, center.getZ() + (int) overrideAABB.maxZ);
 
             int xLength = Math.abs(corner1.getX() - corner2.getX());
             int yLength = Math.abs(corner1.getY() - corner2.getY());
@@ -2057,8 +2174,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             BlockPos minCorner = new BlockPos(
                     Math.min(corner1.getX(), corner2.getX()),
                     Math.min(corner1.getY(), corner2.getY()),
-                    Math.min(corner1.getZ(), corner2.getZ())
-            );
+                    Math.min(corner1.getZ(), corner2.getZ()));
             // Iterate over the edges of the cuboid
             for (int x = 0; x <= xLength + 1; x++) {
                 for (int y = 0; y <= yLength + 1; y++) {
@@ -2114,10 +2230,10 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                     minCorner.getX() + x,
                                     minCorner.getY() + y,
                                     minCorner.getZ() + z,
-                                    xVel, yVel, zVel, 0, 1
-                            );
+                                    xVel, yVel, zVel, 0, 1);
                             if (pConnection.isConnected()) {
-                                if (pConnection.getPacketListener().isAcceptingMessages() && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
+                                if (pConnection.getPacketListener().isAcceptingMessages()
+                                        && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
                                     pConnection.send(particlesPacket);
                                 }
                             }
@@ -2128,7 +2244,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
         }
     }
 
-    public static void spawnVortexCylinder(Connection pConnection, BlockPos center, BlockPos targetPosition, double radius, double length) {
+    public static void spawnVortexCylinder(Connection pConnection, BlockPos center, BlockPos targetPosition,
+            double radius, double length) {
         radius = radius + 6;
 
         int particleCount = (int) (25 * (radius + length));
@@ -2145,7 +2262,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
         dy /= magnitude;
         dz /= magnitude;
 
-        // Up vector (can be any orthogonal vector to direction vector, here we choose Y-axis)
+        // Up vector (can be any orthogonal vector to direction vector, here we choose
+        // Y-axis)
         double upX = 0, upY = 1, upZ = 0;
 
         // Calculate right vector using cross product (direction x up)
@@ -2199,10 +2317,10 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     rotatedX,
                     rotatedY,
                     rotatedZ,
-                    xVel, yVel, zVel, 0.025F, 1
-            );
+                    xVel, yVel, zVel, 0.025F, 1);
             if (pConnection.isConnected()) {
-                if (pConnection.getPacketListener().isAcceptingMessages() && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
+                if (pConnection.getPacketListener().isAcceptingMessages()
+                        && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
                     pConnection.send(particlesPacket);
                 }
             }
@@ -2219,12 +2337,13 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
         dirX /= magnitude;
         dirZ /= magnitude;
 
-        double total_distance = Math.sqrt(pPos.distToCenterSqr(currentTarget.getX(), pPos.getY(), currentTarget.getZ()));
+        double total_distance = Math
+                .sqrt(pPos.distToCenterSqr(currentTarget.getX(), pPos.getY(), currentTarget.getZ()));
         double distance = (0.5 * total_distance);
 
         // Calculate the new position
-        int newX = pPos.getX() + (int)(dirX * distance);
-        int newZ = pPos.getZ() + (int)(dirZ * distance);
+        int newX = pPos.getX() + (int) (dirX * distance);
+        int newZ = pPos.getZ() + (int) (dirZ * distance);
 
         if ((dirX > 0 && newX > currentTarget.getX()) || (dirX < 0 && newX < currentTarget.getX())) {
             newX = currentTarget.getX();
@@ -2240,8 +2359,10 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
         List<Connection> connectionList = pLevel.getServer().getConnection().getConnections();
         for (Connection pConnection : connectionList) {
             if (pConnection.isConnected()) {
-                ClientboundAddEntityPacket entityPacket = new ClientboundAddEntityPacket(new LightningBolt(EntityType.LIGHTNING_BOLT, pLevel), 0, targetPosition);
-                if (pConnection.getPacketListener().isAcceptingMessages() && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
+                ClientboundAddEntityPacket entityPacket = new ClientboundAddEntityPacket(
+                        new LightningBolt(EntityType.LIGHTNING_BOLT, pLevel), 0, targetPosition);
+                if (pConnection.getPacketListener().isAcceptingMessages()
+                        && (pConnection.getPacketListener() instanceof ServerGamePacketListenerImpl)) {
                     pConnection.send(entityPacket);
                 }
             }
@@ -2302,7 +2423,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
         }
     }
 
-    private void handleVortex2VortexTeleports(int size, AABB overrideAABB, Level pLevel, BlockPos pPos, BlockPos vortexTargetPos) {
+    private void handleVortex2VortexTeleports(int size, AABB overrideAABB, Level pLevel, BlockPos pPos,
+            BlockPos vortexTargetPos) {
         int y_size = 5;
 
         if (size < 5) {
@@ -2321,18 +2443,26 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                             handleBlockTeleportVortex2Vortex(pLevel, currentPos, vortexTargetPos, x, y, z);
                             continue;
                         }
-                        Entity player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(), 1, false);
+                        Entity player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(),
+                                1, false);
                         if (player != null) {
-                            TeleportationDetails details = new TeleportationDetails(player, vortexTargetPos, player.position().x() - pPos.getX(), player.position().y() - pPos.getY(), player.position().z() - pPos.getZ());
+                            TeleportationDetails details = new TeleportationDetails(player, vortexTargetPos,
+                                    player.position().x() - pPos.getX(), player.position().y() - pPos.getY(),
+                                    player.position().z() - pPos.getZ());
                             toBeTeleported.add(details);
                         }
 
-                        AABB searchBB = new AABB(currentPos.getX() - 1, currentPos.getY() - 1, currentPos.getZ() - 1, currentPos.getX() + 1, currentPos.getY() + 1, currentPos.getZ() + 1);
+                        AABB searchBB = new AABB(currentPos.getX() - 1, currentPos.getY() - 1, currentPos.getZ() - 1,
+                                currentPos.getX() + 1, currentPos.getY() + 1, currentPos.getZ() + 1);
 
-                        List<Entity> nearbyEntities = pLevel.getEntitiesOfClass(Entity.class, searchBB, entity -> !(entity instanceof Player));
+                        List<Entity> nearbyEntities = pLevel.getEntitiesOfClass(Entity.class, searchBB,
+                                entity -> !(entity instanceof Player));
 
                         for (Entity nearbyEntity : nearbyEntities) {
-                            TeleportationDetails details = new TeleportationDetails(nearbyEntity, vortexTargetPos, nearbyEntity.position().x() - pPos.getX(), nearbyEntity.position().y() - pPos.getY(), nearbyEntity.position().z() - pPos.getZ());
+                            TeleportationDetails details = new TeleportationDetails(nearbyEntity, vortexTargetPos,
+                                    nearbyEntity.position().x() - pPos.getX(),
+                                    nearbyEntity.position().y() - pPos.getY(),
+                                    nearbyEntity.position().z() - pPos.getZ());
                             toBeTeleported.add(details);
                         }
 
@@ -2342,7 +2472,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             }
 
             for (TeleportationDetails tpDetails : toBeTeleported) {
-                handlePlayerTeleportVortex2Vortex(tpDetails.player, tpDetails.targetPos, tpDetails.x, tpDetails.y, tpDetails.z);
+                handlePlayerTeleportVortex2Vortex(tpDetails.player, tpDetails.targetPos, tpDetails.x, tpDetails.y,
+                        tpDetails.z);
             }
 
             for (int x = -size; x <= size; x++) {
@@ -2350,7 +2481,28 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     for (int z = -size; z <= size; z++) {
                         BlockPos currentPos = pPos.offset(x, y, z);
 
-                        if (pLevel.getBlockState(currentPos).getBlock() instanceof DoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TorchBlock || pLevel.getBlockState(currentPos).getBlock() instanceof PressurePlateBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ButtonBlock || pLevel.getBlockState(currentPos).getBlock() instanceof LeverBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedstoneTorchBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallGrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof SeagrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallSeagrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TorchflowerCropBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ChorusFlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallFlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerPotBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ThrottleBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock || pLevel.getBlockState(currentPos).getBlock() instanceof BedBlock || pLevel.getBlockState(currentPos).getBlock() instanceof CarpetBlock || pLevel.getBlockState(currentPos).getBlock() instanceof VineBlock) {
+                        if (pLevel.getBlockState(currentPos).getBlock() instanceof DoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TorchBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof PressurePlateBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ButtonBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof LeverBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedstoneTorchBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallGrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof SeagrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallSeagrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TorchflowerCropBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ChorusFlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallFlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerPotBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ThrottleBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof BedBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof CarpetBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof VineBlock) {
                             handleBlockRemoval(pLevel, currentPos);
                         } else {
                             if (currentPos != pPos) {
@@ -2360,8 +2512,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     }
                 }
             }
-        }
-        else {
+        } else {
             for (int x = (int) overrideAABB.minX; x <= (int) overrideAABB.maxX; x++) {
                 for (int y = (int) overrideAABB.minY; y <= (int) overrideAABB.maxY; y++) {
                     for (int z = (int) overrideAABB.minZ; z <= (int) overrideAABB.maxZ; z++) {
@@ -2370,18 +2521,26 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                             handleBlockTeleportVortex2Vortex(pLevel, currentPos, vortexTargetPos, x, y, z);
                             continue;
                         }
-                        Entity player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(), 1, false);
+                        Entity player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(),
+                                1, false);
                         if (player != null) {
-                            TeleportationDetails details = new TeleportationDetails(player, vortexTargetPos, player.position().x() - pPos.getX(), player.position().y() - pPos.getY(), player.position().z() - pPos.getZ());
+                            TeleportationDetails details = new TeleportationDetails(player, vortexTargetPos,
+                                    player.position().x() - pPos.getX(), player.position().y() - pPos.getY(),
+                                    player.position().z() - pPos.getZ());
                             toBeTeleported.add(details);
                         }
 
-                        AABB searchBB = new AABB(currentPos.getX() - 1, currentPos.getY() - 1, currentPos.getZ() - 1, currentPos.getX() + 1, currentPos.getY() + 1, currentPos.getZ() + 1);
+                        AABB searchBB = new AABB(currentPos.getX() - 1, currentPos.getY() - 1, currentPos.getZ() - 1,
+                                currentPos.getX() + 1, currentPos.getY() + 1, currentPos.getZ() + 1);
 
-                        List<Entity> nearbyEntities = pLevel.getEntitiesOfClass(Entity.class, searchBB, entity -> !(entity instanceof Player));
+                        List<Entity> nearbyEntities = pLevel.getEntitiesOfClass(Entity.class, searchBB,
+                                entity -> !(entity instanceof Player));
 
                         for (Entity nearbyEntity : nearbyEntities) {
-                            TeleportationDetails details = new TeleportationDetails(nearbyEntity, vortexTargetPos, nearbyEntity.position().x() - pPos.getX(), nearbyEntity.position().y() - pPos.getY(), nearbyEntity.position().z() - pPos.getZ());
+                            TeleportationDetails details = new TeleportationDetails(nearbyEntity, vortexTargetPos,
+                                    nearbyEntity.position().x() - pPos.getX(),
+                                    nearbyEntity.position().y() - pPos.getY(),
+                                    nearbyEntity.position().z() - pPos.getZ());
                             toBeTeleported.add(details);
                         }
 
@@ -2391,7 +2550,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             }
 
             for (TeleportationDetails tpDetails : toBeTeleported) {
-                handlePlayerTeleportVortex2Vortex(tpDetails.player, tpDetails.targetPos, tpDetails.x, tpDetails.y, tpDetails.z);
+                handlePlayerTeleportVortex2Vortex(tpDetails.player, tpDetails.targetPos, tpDetails.x, tpDetails.y,
+                        tpDetails.z);
             }
 
             for (int x = (int) overrideAABB.minX; x <= (int) overrideAABB.maxX; x++) {
@@ -2399,7 +2559,28 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     for (int z = (int) overrideAABB.minZ; z <= (int) overrideAABB.maxZ; z++) {
                         BlockPos currentPos = pPos.offset(x, y, z);
 
-                        if (pLevel.getBlockState(currentPos).getBlock() instanceof DoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TorchBlock || pLevel.getBlockState(currentPos).getBlock() instanceof PressurePlateBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ButtonBlock || pLevel.getBlockState(currentPos).getBlock() instanceof LeverBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedstoneTorchBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallGrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof SeagrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallSeagrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TorchflowerCropBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ChorusFlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallFlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerPotBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ThrottleBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock || pLevel.getBlockState(currentPos).getBlock() instanceof BedBlock || pLevel.getBlockState(currentPos).getBlock() instanceof CarpetBlock || pLevel.getBlockState(currentPos).getBlock() instanceof VineBlock) {
+                        if (pLevel.getBlockState(currentPos).getBlock() instanceof DoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TorchBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof PressurePlateBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ButtonBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof LeverBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedstoneTorchBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallGrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof SeagrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallSeagrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TorchflowerCropBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ChorusFlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallFlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerPotBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ThrottleBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof BedBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof CarpetBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof VineBlock) {
                             handleBlockRemoval(pLevel, currentPos);
                         } else {
                             if (currentPos != pPos) {
@@ -2418,7 +2599,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
         handleBlockRemoval(pLevel, pPos);
     }
 
-    private void handleVortexTeleports(int size, AABB overrideAABB, Level pLevel, BlockPos pPos, BlockPos vortexTargetPos) {
+    private void handleVortexTeleports(int size, AABB overrideAABB, Level pLevel, BlockPos pPos,
+            BlockPos vortexTargetPos) {
         int y_size = 5;
 
         if (size < 5) {
@@ -2437,18 +2619,26 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                             handleBlockTeleportVortex(pLevel, currentPos, vortexTargetPos, x, y, z);
                             continue;
                         }
-                        Entity player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(), 1, false);
+                        Entity player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(),
+                                1, false);
                         if (player != null) {
-                            TeleportationDetails details = new TeleportationDetails(player, vortexTargetPos, player.position().x() - pPos.getX(), player.position().y() - pPos.getY(), player.position().z() - pPos.getZ());
+                            TeleportationDetails details = new TeleportationDetails(player, vortexTargetPos,
+                                    player.position().x() - pPos.getX(), player.position().y() - pPos.getY(),
+                                    player.position().z() - pPos.getZ());
                             toBeTeleported.add(details);
                         }
 
-                        AABB searchBB = new AABB(currentPos.getX() - 1, currentPos.getY() - 1, currentPos.getZ() - 1, currentPos.getX() + 1, currentPos.getY() + 1, currentPos.getZ() + 1);
+                        AABB searchBB = new AABB(currentPos.getX() - 1, currentPos.getY() - 1, currentPos.getZ() - 1,
+                                currentPos.getX() + 1, currentPos.getY() + 1, currentPos.getZ() + 1);
 
-                        List<Entity> nearbyEntities = pLevel.getEntitiesOfClass(Entity.class, searchBB, entity -> !(entity instanceof Player));
+                        List<Entity> nearbyEntities = pLevel.getEntitiesOfClass(Entity.class, searchBB,
+                                entity -> !(entity instanceof Player));
 
                         for (Entity nearbyEntity : nearbyEntities) {
-                            TeleportationDetails details = new TeleportationDetails(nearbyEntity, vortexTargetPos, nearbyEntity.position().x() - pPos.getX(), nearbyEntity.position().y() - pPos.getY(), nearbyEntity.position().z() - pPos.getZ());
+                            TeleportationDetails details = new TeleportationDetails(nearbyEntity, vortexTargetPos,
+                                    nearbyEntity.position().x() - pPos.getX(),
+                                    nearbyEntity.position().y() - pPos.getY(),
+                                    nearbyEntity.position().z() - pPos.getZ());
                             toBeTeleported.add(details);
                         }
 
@@ -2458,7 +2648,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             }
 
             for (TeleportationDetails tpDetails : toBeTeleported) {
-                handlePlayerTeleportVortex(tpDetails.player, tpDetails.targetPos, tpDetails.x, tpDetails.y, tpDetails.z);
+                handlePlayerTeleportVortex(tpDetails.player, tpDetails.targetPos, tpDetails.x, tpDetails.y,
+                        tpDetails.z);
             }
 
             for (int x = -size; x <= size; x++) {
@@ -2466,7 +2657,28 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     for (int z = -size; z <= size; z++) {
                         BlockPos currentPos = pPos.offset(x, y, z);
 
-                        if (pLevel.getBlockState(currentPos).getBlock() instanceof DoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TorchBlock || pLevel.getBlockState(currentPos).getBlock() instanceof PressurePlateBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ButtonBlock || pLevel.getBlockState(currentPos).getBlock() instanceof LeverBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedstoneTorchBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallGrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof SeagrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallSeagrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TorchflowerCropBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ChorusFlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallFlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerPotBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ThrottleBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock || pLevel.getBlockState(currentPos).getBlock() instanceof BedBlock || pLevel.getBlockState(currentPos).getBlock() instanceof CarpetBlock || pLevel.getBlockState(currentPos).getBlock() instanceof VineBlock) {
+                        if (pLevel.getBlockState(currentPos).getBlock() instanceof DoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TorchBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof PressurePlateBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ButtonBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof LeverBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedstoneTorchBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallGrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof SeagrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallSeagrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TorchflowerCropBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ChorusFlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallFlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerPotBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ThrottleBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof BedBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof CarpetBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof VineBlock) {
                             handleBlockRemoval(pLevel, currentPos);
                         } else {
                             if (currentPos != pPos) {
@@ -2476,8 +2688,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     }
                 }
             }
-        }
-        else {
+        } else {
             for (int x = (int) overrideAABB.minX; x <= (int) overrideAABB.maxX; x++) {
                 for (int y = (int) overrideAABB.minY; y <= (int) overrideAABB.maxY; y++) {
                     for (int z = (int) overrideAABB.minZ; z <= (int) overrideAABB.maxZ; z++) {
@@ -2486,18 +2697,26 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                             handleBlockTeleportVortex(pLevel, currentPos, vortexTargetPos, x, y, z);
                             continue;
                         }
-                        Entity player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(), 1, false);
+                        Entity player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(),
+                                1, false);
                         if (player != null) {
-                            TeleportationDetails details = new TeleportationDetails(player, vortexTargetPos, player.position().x() - pPos.getX(), player.position().y() - pPos.getY(), player.position().z() - pPos.getZ());
+                            TeleportationDetails details = new TeleportationDetails(player, vortexTargetPos,
+                                    player.position().x() - pPos.getX(), player.position().y() - pPos.getY(),
+                                    player.position().z() - pPos.getZ());
                             toBeTeleported.add(details);
                         }
 
-                        AABB searchBB = new AABB(currentPos.getX() - 1, currentPos.getY() - 1, currentPos.getZ() - 1, currentPos.getX() + 1, currentPos.getY() + 1, currentPos.getZ() + 1);
+                        AABB searchBB = new AABB(currentPos.getX() - 1, currentPos.getY() - 1, currentPos.getZ() - 1,
+                                currentPos.getX() + 1, currentPos.getY() + 1, currentPos.getZ() + 1);
 
-                        List<Entity> nearbyEntities = pLevel.getEntitiesOfClass(Entity.class, searchBB, entity -> !(entity instanceof Player));
+                        List<Entity> nearbyEntities = pLevel.getEntitiesOfClass(Entity.class, searchBB,
+                                entity -> !(entity instanceof Player));
 
                         for (Entity nearbyEntity : nearbyEntities) {
-                            TeleportationDetails details = new TeleportationDetails(nearbyEntity, vortexTargetPos, nearbyEntity.position().x() - pPos.getX(), nearbyEntity.position().y() - pPos.getY(), nearbyEntity.position().z() - pPos.getZ());
+                            TeleportationDetails details = new TeleportationDetails(nearbyEntity, vortexTargetPos,
+                                    nearbyEntity.position().x() - pPos.getX(),
+                                    nearbyEntity.position().y() - pPos.getY(),
+                                    nearbyEntity.position().z() - pPos.getZ());
                             toBeTeleported.add(details);
                         }
 
@@ -2507,7 +2726,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             }
 
             for (TeleportationDetails tpDetails : toBeTeleported) {
-                handlePlayerTeleportVortex(tpDetails.player, tpDetails.targetPos, tpDetails.x, tpDetails.y, tpDetails.z);
+                handlePlayerTeleportVortex(tpDetails.player, tpDetails.targetPos, tpDetails.x, tpDetails.y,
+                        tpDetails.z);
             }
 
             for (int x = (int) overrideAABB.minX; x <= (int) overrideAABB.maxX; x++) {
@@ -2515,10 +2735,30 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     for (int z = (int) overrideAABB.minZ; z <= (int) overrideAABB.maxZ; z++) {
                         BlockPos currentPos = pPos.offset(x, y, z);
 
-                        if (pLevel.getBlockState(currentPos).getBlock() instanceof DoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TorchBlock || pLevel.getBlockState(currentPos).getBlock() instanceof PressurePlateBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ButtonBlock || pLevel.getBlockState(currentPos).getBlock() instanceof LeverBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedstoneTorchBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallGrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof SeagrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallSeagrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TorchflowerCropBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ChorusFlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallFlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerPotBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ThrottleBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock || pLevel.getBlockState(currentPos).getBlock() instanceof BedBlock || pLevel.getBlockState(currentPos).getBlock() instanceof CarpetBlock || pLevel.getBlockState(currentPos).getBlock() instanceof VineBlock) {
+                        if (pLevel.getBlockState(currentPos).getBlock() instanceof DoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TorchBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof PressurePlateBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ButtonBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof LeverBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedstoneTorchBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallGrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof SeagrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallSeagrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TorchflowerCropBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ChorusFlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallFlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerPotBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ThrottleBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof BedBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof CarpetBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof VineBlock) {
                             handleBlockRemoval(pLevel, currentPos);
-                        }
-                        else {
+                        } else {
                             if (currentPos != pPos) {
                                 toBeRemoved.add(currentPos);
                             }
@@ -2535,7 +2775,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
         handleBlockRemoval(pLevel, pPos);
     }
 
-    private void handleTeleports(int size, AABB overrideAABB, Level pLevel, ServerLevel targetDimension, BlockPos pPos, BlockPos targetPos) {
+    private void handleTeleports(int size, AABB overrideAABB, Level pLevel, ServerLevel targetDimension, BlockPos pPos,
+            BlockPos targetPos) {
         int y_size = 5;
 
         if (size < 5) {
@@ -2550,18 +2791,26 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                 for (int y = -1; y <= y_size + (y_size - 1); y++) {
                     for (int z = -size; z <= size; z++) {
                         BlockPos currentPos = pPos.offset(x, y, z);
-                        Entity player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(), 1, false);
+                        Entity player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(),
+                                1, false);
                         if (player != null) {
-                            TeleportationDetails details = new TeleportationDetails(player, targetPos, player.position().x() - pPos.getX(), player.position().y() - pPos.getY(), player.position().z() - pPos.getZ());
+                            TeleportationDetails details = new TeleportationDetails(player, targetPos,
+                                    player.position().x() - pPos.getX(), player.position().y() - pPos.getY(),
+                                    player.position().z() - pPos.getZ());
                             toBeTeleported.add(details);
                         }
 
-                        AABB searchBB = new AABB(currentPos.getX() - 1, currentPos.getY() - 1, currentPos.getZ() - 1, currentPos.getX() + 1, currentPos.getY() + 1, currentPos.getZ() + 1);
+                        AABB searchBB = new AABB(currentPos.getX() - 1, currentPos.getY() - 1, currentPos.getZ() - 1,
+                                currentPos.getX() + 1, currentPos.getY() + 1, currentPos.getZ() + 1);
 
-                        List<Entity> nearbyEntities = pLevel.getEntitiesOfClass(Entity.class, searchBB, entity -> !(entity instanceof Player));
+                        List<Entity> nearbyEntities = pLevel.getEntitiesOfClass(Entity.class, searchBB,
+                                entity -> !(entity instanceof Player));
 
                         for (Entity nearbyEntity : nearbyEntities) {
-                            TeleportationDetails details = new TeleportationDetails(nearbyEntity, targetPos, nearbyEntity.position().x() - pPos.getX(), nearbyEntity.position().y() - pPos.getY(), nearbyEntity.position().z() - pPos.getZ());
+                            TeleportationDetails details = new TeleportationDetails(nearbyEntity, targetPos,
+                                    nearbyEntity.position().x() - pPos.getX(),
+                                    nearbyEntity.position().y() - pPos.getY(),
+                                    nearbyEntity.position().z() - pPos.getZ());
                             toBeTeleported.add(details);
                         }
 
@@ -2571,7 +2820,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             }
 
             for (TeleportationDetails tpDetails : toBeTeleported) {
-                handlePlayerTeleport(tpDetails.player, tpDetails.targetPos, tpDetails.x, tpDetails.y, tpDetails.z, targetDimension);
+                handlePlayerTeleport(tpDetails.player, tpDetails.targetPos, tpDetails.x, tpDetails.y, tpDetails.z,
+                        targetDimension);
             }
 
             for (int x = -size; x <= size; x++) {
@@ -2579,7 +2829,28 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     for (int z = -size; z <= size; z++) {
                         BlockPos currentPos = pPos.offset(x, y, z);
 
-                        if (pLevel.getBlockState(currentPos).getBlock() instanceof DoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TorchBlock || pLevel.getBlockState(currentPos).getBlock() instanceof PressurePlateBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ButtonBlock || pLevel.getBlockState(currentPos).getBlock() instanceof LeverBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedstoneTorchBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallGrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof SeagrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallSeagrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TorchflowerCropBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ChorusFlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallFlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerPotBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ThrottleBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock || pLevel.getBlockState(currentPos).getBlock() instanceof BedBlock || pLevel.getBlockState(currentPos).getBlock() instanceof CarpetBlock || pLevel.getBlockState(currentPos).getBlock() instanceof VineBlock) {
+                        if (pLevel.getBlockState(currentPos).getBlock() instanceof DoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TorchBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof PressurePlateBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ButtonBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof LeverBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedstoneTorchBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallGrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof SeagrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallSeagrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TorchflowerCropBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ChorusFlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallFlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerPotBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ThrottleBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof BedBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof CarpetBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof VineBlock) {
                             handleBlockRemoval(pLevel, currentPos);
                         } else {
                             if (currentPos != pPos) {
@@ -2589,24 +2860,31 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     }
                 }
             }
-        }
-        else {
+        } else {
             for (int x = (int) overrideAABB.minX; x <= (int) overrideAABB.maxX; x++) {
                 for (int y = (int) overrideAABB.minY; y <= (int) overrideAABB.maxY; y++) {
                     for (int z = (int) overrideAABB.minZ; z <= (int) overrideAABB.maxZ; z++) {
                         BlockPos currentPos = pPos.offset(x, y, z);
-                        Entity player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(), 1, false);
+                        Entity player = pLevel.getNearestPlayer(currentPos.getX(), currentPos.getY(), currentPos.getZ(),
+                                1, false);
                         if (player != null) {
-                            TeleportationDetails details = new TeleportationDetails(player, targetPos, player.position().x() - pPos.getX(), player.position().y() - pPos.getY(), player.position().z() - pPos.getZ());
+                            TeleportationDetails details = new TeleportationDetails(player, targetPos,
+                                    player.position().x() - pPos.getX(), player.position().y() - pPos.getY(),
+                                    player.position().z() - pPos.getZ());
                             toBeTeleported.add(details);
                         }
 
-                        AABB searchBB = new AABB(currentPos.getX() - 1, currentPos.getY() - 1, currentPos.getZ() - 1, currentPos.getX() + 1, currentPos.getY() + 1, currentPos.getZ() + 1);
+                        AABB searchBB = new AABB(currentPos.getX() - 1, currentPos.getY() - 1, currentPos.getZ() - 1,
+                                currentPos.getX() + 1, currentPos.getY() + 1, currentPos.getZ() + 1);
 
-                        List<Entity> nearbyEntities = pLevel.getEntitiesOfClass(Entity.class, searchBB, entity -> !(entity instanceof Player));
+                        List<Entity> nearbyEntities = pLevel.getEntitiesOfClass(Entity.class, searchBB,
+                                entity -> !(entity instanceof Player));
 
                         for (Entity nearbyEntity : nearbyEntities) {
-                            TeleportationDetails details = new TeleportationDetails(nearbyEntity, targetPos, nearbyEntity.position().x() - pPos.getX(), nearbyEntity.position().y() - pPos.getY(), nearbyEntity.position().z() - pPos.getZ());
+                            TeleportationDetails details = new TeleportationDetails(nearbyEntity, targetPos,
+                                    nearbyEntity.position().x() - pPos.getX(),
+                                    nearbyEntity.position().y() - pPos.getY(),
+                                    nearbyEntity.position().z() - pPos.getZ());
                             toBeTeleported.add(details);
                         }
 
@@ -2616,7 +2894,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             }
 
             for (TeleportationDetails tpDetails : toBeTeleported) {
-                handlePlayerTeleport(tpDetails.player, tpDetails.targetPos, tpDetails.x, tpDetails.y, tpDetails.z, targetDimension);
+                handlePlayerTeleport(tpDetails.player, tpDetails.targetPos, tpDetails.x, tpDetails.y, tpDetails.z,
+                        targetDimension);
             }
 
             for (int x = (int) overrideAABB.minX; x <= (int) overrideAABB.maxX; x++) {
@@ -2624,7 +2903,28 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     for (int z = (int) overrideAABB.minZ; z <= (int) overrideAABB.maxZ; z++) {
                         BlockPos currentPos = pPos.offset(x, y, z);
 
-                        if (pLevel.getBlockState(currentPos).getBlock() instanceof DoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TorchBlock || pLevel.getBlockState(currentPos).getBlock() instanceof PressurePlateBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ButtonBlock || pLevel.getBlockState(currentPos).getBlock() instanceof LeverBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedstoneTorchBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallGrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof SeagrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallSeagrassBlock || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TorchflowerCropBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ChorusFlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof TallFlowerBlock || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerPotBlock || pLevel.getBlockState(currentPos).getBlock() instanceof ThrottleBlock || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock || pLevel.getBlockState(currentPos).getBlock() instanceof BedBlock || pLevel.getBlockState(currentPos).getBlock() instanceof CarpetBlock || pLevel.getBlockState(currentPos).getBlock() instanceof VineBlock) {
+                        if (pLevel.getBlockState(currentPos).getBlock() instanceof DoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TorchBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof PressurePlateBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ButtonBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof LeverBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedstoneTorchBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TrapDoorBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallGrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof SeagrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallSeagrassBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TorchflowerCropBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ChorusFlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof TallFlowerBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof FlowerPotBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof ThrottleBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof RedStoneWireBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof BedBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof CarpetBlock
+                                || pLevel.getBlockState(currentPos).getBlock() instanceof VineBlock) {
                             handleBlockRemoval(pLevel, currentPos);
                         } else {
                             if (currentPos != pPos) {
@@ -2649,14 +2949,14 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                         BlockState updatedBlockState = pLevel.getBlockState(updatedCurrentPos);
                         if (updatedBlockState.getBlock() instanceof ThrottleBlock) {
                             if (updatedBlockState.getValue(BlockStateProperties.POWERED)) {
-                                ((ThrottleBlock) updatedBlockState.getBlock()).pull(updatedBlockState, pLevel, updatedCurrentPos);
+                                ((ThrottleBlock) updatedBlockState.getBlock()).pull(updatedBlockState, pLevel,
+                                        updatedCurrentPos);
                             }
                         }
                     }
                 }
             }
-        }
-        else {
+        } else {
             for (int __x = (int) overrideAABB.minX; __x <= (int) overrideAABB.maxX; __x++) {
                 for (int __y = (int) overrideAABB.minY; __y <= (int) overrideAABB.maxY; __y++) {
                     for (int __z = (int) overrideAABB.minZ; __z <= (int) overrideAABB.maxZ; __z++) {
@@ -2665,7 +2965,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                         BlockState updatedBlockState = pLevel.getBlockState(updatedCurrentPos);
                         if (updatedBlockState.getBlock() instanceof ThrottleBlock) {
                             if (updatedBlockState.getValue(BlockStateProperties.POWERED)) {
-                                ((ThrottleBlock) updatedBlockState.getBlock()).pull(updatedBlockState, pLevel, updatedCurrentPos);
+                                ((ThrottleBlock) updatedBlockState.getBlock()).pull(updatedBlockState, pLevel,
+                                        updatedCurrentPos);
                             }
                         }
                     }
@@ -2676,9 +2977,12 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
         handleBlockRemoval(pLevel, pPos);
     }
 
-    private void handleBlockTeleportVortex2Vortex(Level pLevel, BlockPos currentPos, BlockPos targetPos, int x, int y, int z) {
+    private void handleBlockTeleportVortex2Vortex(Level pLevel, BlockPos currentPos, BlockPos targetPos, int x, int y,
+            int z) {
         if (pLevel instanceof ServerLevel serverlevel) {
-            if (serverlevel.getBlockState(currentPos).getBlock() == Blocks.BEDROCK || serverlevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL || serverlevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL_FRAME) {
+            if (serverlevel.getBlockState(currentPos).getBlock() == Blocks.BEDROCK
+                    || serverlevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL
+                    || serverlevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL_FRAME) {
                 return;
             }
             BlockPos augmentedPos = targetPos.offset(x, y, z);
@@ -2706,7 +3010,9 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
     private void handleBlockTeleportVortex(Level pLevel, BlockPos currentPos, BlockPos targetPos, int x, int y, int z) {
         if (pLevel instanceof ServerLevel serverlevel) {
-            if (serverlevel.getBlockState(currentPos).getBlock() == Blocks.BEDROCK || serverlevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL || serverlevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL_FRAME) {
+            if (serverlevel.getBlockState(currentPos).getBlock() == Blocks.BEDROCK
+                    || serverlevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL
+                    || serverlevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL_FRAME) {
                 return;
             }
             MinecraftServer minecraftserver = serverlevel.getServer();
@@ -2738,17 +3044,19 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                             newBlockEntity.loadWithComponents(nbtData, this.level.registryAccess());
                         }
                     }
-                }
-                else {
+                } else {
                     dimension.setBlockAndUpdate(augmentedPos, Blocks.AIR.defaultBlockState());
                 }
             }
         }
     }
 
-    private void handleBlockTeleport(Level pLevel, BlockPos currentPos, BlockPos targetPos, int x, int y, int z, ServerLevel dimension) {
+    private void handleBlockTeleport(Level pLevel, BlockPos currentPos, BlockPos targetPos, int x, int y, int z,
+            ServerLevel dimension) {
         if (pLevel instanceof ServerLevel serverlevel) {
-            if (serverlevel.getBlockState(currentPos).getBlock() == Blocks.BEDROCK || serverlevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL || serverlevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL_FRAME) {
+            if (serverlevel.getBlockState(currentPos).getBlock() == Blocks.BEDROCK
+                    || serverlevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL
+                    || serverlevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL_FRAME) {
                 return;
             }
             if (dimension != null) {
@@ -2780,8 +3088,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                             newBlockEntity.loadWithComponents(nbtData, this.level.registryAccess());
                         }
                     }
-                }
-                else {
+                } else {
                     dimension.setBlockAndUpdate(augmentedPos, Blocks.AIR.defaultBlockState());
                 }
             }
@@ -2790,7 +3097,9 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
     private void handleBlockRemoval(Level pLevel, BlockPos currentPos) {
         if (pLevel instanceof ServerLevel serverLevel) {
-            if (serverLevel.getBlockState(currentPos).getBlock() == Blocks.BEDROCK || serverLevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL || serverLevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL_FRAME) {
+            if (serverLevel.getBlockState(currentPos).getBlock() == Blocks.BEDROCK
+                    || serverLevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL
+                    || serverLevel.getBlockState(currentPos).getBlock() == Blocks.END_PORTAL_FRAME) {
                 return;
             }
             BlockEntity blockEntity = pLevel.getBlockEntity(currentPos);
@@ -2819,18 +3128,21 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             if (dimension != null && !player.isPassenger()) {
                 Vec3 augmentedPos = new Vec3(targetPos.getX() + x, targetPos.getY() + y, targetPos.getZ() + z);
 
-                player.changeDimension(new DimensionTransition(dimension, augmentedPos, Vec3.ZERO, player.getYRot(), player.getXRot(), DimensionTransition.DO_NOTHING));
+                player.changeDimension(new DimensionTransition(dimension, augmentedPos, Vec3.ZERO, player.getYRot(),
+                        player.getXRot(), DimensionTransition.DO_NOTHING));
             }
         }
     }
 
-    private void handlePlayerTeleport(Entity player, BlockPos targetPos, double x, double y, double z, ServerLevel dimension) {
+    private void handlePlayerTeleport(Entity player, BlockPos targetPos, double x, double y, double z,
+            ServerLevel dimension) {
         if (player.level() instanceof ServerLevel serverlevel) {
 
             if (dimension != null && !player.isPassenger()) {
                 Vec3 augmentedPos = new Vec3(targetPos.getX() + x, targetPos.getY() + y, targetPos.getZ() + z);
 
-                player.changeDimension(new DimensionTransition(dimension, augmentedPos, Vec3.ZERO, player.getYRot(), player.getXRot(), DimensionTransition.DO_NOTHING));
+                player.changeDimension(new DimensionTransition(dimension, augmentedPos, Vec3.ZERO, player.getYRot(),
+                        player.getXRot(), DimensionTransition.DO_NOTHING));
             }
         }
     }

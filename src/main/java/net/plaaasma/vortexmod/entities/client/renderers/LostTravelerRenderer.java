@@ -20,19 +20,19 @@ public class LostTravelerRenderer extends MobRenderer<LostTravelerEntity, LostTr
 
         switch (pEntity.travelerType) {
             case BLUE_TRADER -> {
-                return new ResourceLocation(VortexMod.MODID, "textures/entity/blue_trader.png");
+                return ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "textures/entity/blue_trader.png");
             }
             case ORANGE_TRADER -> {
-                return new ResourceLocation(VortexMod.MODID, "textures/entity/orange_trader.png");
+                return ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "textures/entity/orange_trader.png");
             }
             case PURPLE_TRADER -> {
-                return new ResourceLocation(VortexMod.MODID, "textures/entity/purple_trader.png");
+                return ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "textures/entity/purple_trader.png");
             }
             case BLACK_TRADER -> {
-                return new ResourceLocation(VortexMod.MODID, "textures/entity/black_trader.png");
+                return ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "textures/entity/black_trader.png");
             }
         }
-        return new ResourceLocation(VortexMod.MODID, "textures/entity/lost_traveler.png");
+        return ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "textures/entity/lost_traveler.png");
     }
 
     @Override

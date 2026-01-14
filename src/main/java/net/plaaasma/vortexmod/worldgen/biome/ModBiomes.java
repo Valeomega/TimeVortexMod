@@ -26,15 +26,15 @@ import net.plaaasma.vortexmod.worldgen.ModConfiguredFeatures;
 import net.plaaasma.vortexmod.worldgen.ModPlacedFeatures;
 
 public class ModBiomes {
-    public static final ResourceKey<Biome> BLUE_VORTEX_BIOME = ResourceKey.create(Registries.BIOME, new ResourceLocation(VortexMod.MODID, "blue_vortex_biome"));
-    public static final ResourceKey<Biome> ORANGE_VORTEX_BIOME = ResourceKey.create(Registries.BIOME, new ResourceLocation(VortexMod.MODID, "orange_vortex_biome"));
-    public static final ResourceKey<Biome> PURPLE_VORTEX_BIOME = ResourceKey.create(Registries.BIOME, new ResourceLocation(VortexMod.MODID, "purple_vortex_biome"));
-    public static final ResourceKey<Biome> BLACK_VORTEX_BIOME = ResourceKey.create(Registries.BIOME, new ResourceLocation(VortexMod.MODID, "black_vortex_biome"));
-    public static final ResourceKey<Biome> TARDIS_BIOME = ResourceKey.create(Registries.BIOME, new ResourceLocation(VortexMod.MODID, "tardis_biome"));
-    public static final ResourceKey<Biome> IRRADIATED_FOREST_BIOME = ResourceKey.create(Registries.BIOME, new ResourceLocation(VortexMod.MODID, "irradiated_forest_biome"));
-    public static final ResourceKey<Biome> SUPER_IRRADIATED_FOREST_BIOME = ResourceKey.create(Registries.BIOME, new ResourceLocation(VortexMod.MODID, "super_irradiated_forest_biome"));
-    public static final ResourceKey<Biome> IRRADIATED_DESERT_BIOME = ResourceKey.create(Registries.BIOME, new ResourceLocation(VortexMod.MODID, "irradiated_desert_biome"));
-    public static final ResourceKey<Biome> IRRADIATED_BADLANDS_BIOME = ResourceKey.create(Registries.BIOME, new ResourceLocation(VortexMod.MODID, "irradiated_badlands_biome"));
+    public static final ResourceKey<Biome> BLUE_VORTEX_BIOME = ResourceKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "blue_vortex_biome"));
+    public static final ResourceKey<Biome> ORANGE_VORTEX_BIOME = ResourceKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "orange_vortex_biome"));
+    public static final ResourceKey<Biome> PURPLE_VORTEX_BIOME = ResourceKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "purple_vortex_biome"));
+    public static final ResourceKey<Biome> BLACK_VORTEX_BIOME = ResourceKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "black_vortex_biome"));
+    public static final ResourceKey<Biome> TARDIS_BIOME = ResourceKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "tardis_biome"));
+    public static final ResourceKey<Biome> IRRADIATED_FOREST_BIOME = ResourceKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "irradiated_forest_biome"));
+    public static final ResourceKey<Biome> SUPER_IRRADIATED_FOREST_BIOME = ResourceKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "super_irradiated_forest_biome"));
+    public static final ResourceKey<Biome> IRRADIATED_DESERT_BIOME = ResourceKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "irradiated_desert_biome"));
+    public static final ResourceKey<Biome> IRRADIATED_BADLANDS_BIOME = ResourceKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "irradiated_badlands_biome"));
     private enum BiomeColor {
         BLUE,
         ORANGE,

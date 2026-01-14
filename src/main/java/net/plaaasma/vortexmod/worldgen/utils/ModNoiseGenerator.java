@@ -22,9 +22,9 @@ import java.util.stream.Stream;
 
 public record ModNoiseGenerator(NoiseSettings noiseSettings, BlockState defaultBlock, BlockState defaultFluid, NoiseRouter noiseRouter, SurfaceRules.RuleSource surfaceRule, List<Climate.ParameterPoint> spawnTarget, int seaLevel, boolean disableMobGeneration, boolean aquifersEnabled, boolean oreVeinsEnabled, boolean useLegacyRandomSource) {
 
-    public static final ResourceKey<NoiseGeneratorSettings> VORTEX_CAVES = ResourceKey.create(Registries.NOISE_SETTINGS, new ResourceLocation(VortexMod.MODID,"vortex_caves"));
-    public static final ResourceKey<NoiseGeneratorSettings> VOID = ResourceKey.create(Registries.NOISE_SETTINGS, new ResourceLocation(VortexMod.MODID,"tardis_void"));
-    public static final ResourceKey<NoiseGeneratorSettings> OVERWORLD = ResourceKey.create(Registries.NOISE_SETTINGS, new ResourceLocation(VortexMod.MODID,"overworld"));
+    public static final ResourceKey<NoiseGeneratorSettings> VORTEX_CAVES = ResourceKey.create(Registries.NOISE_SETTINGS, ResourceLocation.fromNamespaceAndPath(VortexMod.MODID,"vortex_caves"));
+    public static final ResourceKey<NoiseGeneratorSettings> VOID = ResourceKey.create(Registries.NOISE_SETTINGS, ResourceLocation.fromNamespaceAndPath(VortexMod.MODID,"tardis_void"));
+    public static final ResourceKey<NoiseGeneratorSettings> OVERWORLD = ResourceKey.create(Registries.NOISE_SETTINGS, ResourceLocation.fromNamespaceAndPath(VortexMod.MODID,"overworld"));
     public static void bootstrap(BootstrapContext<NoiseGeneratorSettings> pContext) {
         pContext.register(VORTEX_CAVES, dummy(pContext));
         pContext.register(VOID, void_dummy(pContext));
@@ -61,7 +61,7 @@ public record ModNoiseGenerator(NoiseSettings noiseSettings, BlockState defaultB
         return new DensityFunctions.HolderHolder(pDensityFunctions.getOrThrow(pKey));
     }
     private static ResourceKey<DensityFunction> createKey(String pLocation) {
-        return ResourceKey.create(Registries.DENSITY_FUNCTION, new ResourceLocation(pLocation));
+        return ResourceKey.create(Registries.DENSITY_FUNCTION, ResourceLocation.parse(pLocation));
     }
 
     private static DensityFunction slide(DensityFunction pDensityFunction, int pMinY, int pMaxY, int p_224447_, int p_224448_, double p_224449_, int p_224450_, int p_224451_, double p_224452_) {

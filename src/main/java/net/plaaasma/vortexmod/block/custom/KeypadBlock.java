@@ -123,43 +123,66 @@ public class KeypadBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHit) {
-        KeypadBlockEntity entity = (KeypadBlockEntity) pLevel.getBlockEntity(pPos);
-
-        if (!pLevel.isClientSide()) {
-            MinecraftServer minecraftserver = pLevel.getServer();
-            ServerLevel tardis_dim = minecraftserver.getLevel(ModDimensions.tardisDIM_LEVEL_KEY);
-            ServerLevel vortex = minecraftserver.getLevel(ModDimensions.vortexDIM_LEVEL_KEY);
-            LocationMapData coord_data = LocationMapData.get(vortex);
-            DimensionMapData dim_data = DimensionMapData.get(tardis_dim);
-
-            // Store list of levels in entity.Levels or something, use this to select in KeypadScreen
-            Iterable<ServerLevel> serverLevels = minecraftserver.getAllLevels();
-            for (ServerLevel serverLevel : serverLevels) {
-                entity.serverLevels.add(serverLevel.dimension().location().getPath());
-            }
-
-            Set<String> coordKeys = coord_data.getDataMap().keySet();
-            for (String coordKey : coordKeys) {
-                BlockPos pointPos = coord_data.getDataMap().get(coordKey);
-                entity.coordData.put(coordKey, pointPos);
-                String pointDimension = dim_data.getDataMap().get(coordKey);
-                entity.dimData.put(coordKey, pointDimension);
-            }
-
-            Map<String, String> levelMap = new HashMap<>();
-            for (String levelString : entity.serverLevels) {
-                levelMap.put(levelString, levelString);
-            }
-
-            PacketHandler.sendToAllClients(new ClientboundTargetMapPacket(pLevel.dimension().location().getPath(), pPos, entity.coordData, entity.dimData));
-            PacketHandler.sendToAllClients(new ClientboundDimListPacket(pLevel.dimension().location().getPath(), pPos, levelMap));
-
-            if (pPlayer instanceof ServerPlayer serverPlayer) {
-                serverPlayer.openMenu(entity, (RegistryFriendlyByteBuf buf) -> buf.writeBlockPos(pPos));
-            }
+        if (pLevel.isClientSide()) {
+            return InteractionResult.SUCCESS;
         }
 
-        return InteractionResult.SUCCESS;
+        if (!(pLevel instanceof ServerLevel serverLevel)) {
+            return InteractionResult.PASS;
+        }
+
+        BlockEntity blockEntity = pLevel.getBlockEntity(pPos);
+        if (!(blockEntity instanceof KeypadBlockEntity entity)) {
+            return InteractionResult.PASS;
+        }
+
+        MinecraftServer minecraftserver = serverLevel.getServer();
+        if (minecraftserver == null) {
+            return InteractionResult.PASS;
+        }
+
+        ServerLevel tardis_dim = minecraftserver.getLevel(ModDimensions.tardisDIM_LEVEL_KEY);
+        ServerLevel vortex = minecraftserver.getLevel(ModDimensions.vortexDIM_LEVEL_KEY);
+        
+        if (tardis_dim == null || vortex == null) {
+            return InteractionResult.PASS;
+        }
+
+        LocationMapData coord_data = LocationMapData.get(vortex);
+        DimensionMapData dim_data = DimensionMapData.get(tardis_dim);
+
+        // Clear previous data
+        entity.serverLevels.clear();
+        entity.coordData.clear();
+        entity.dimData.clear();
+
+        // Store list of levels in entity.Levels or something, use this to select in KeypadScreen
+        Iterable<ServerLevel> allServerLevels = minecraftserver.getAllLevels();
+        for (ServerLevel level : allServerLevels) {
+            entity.serverLevels.add(level.dimension().location().getPath());
+        }
+
+        Set<String> coordKeys = coord_data.getDataMap().keySet();
+        for (String coordKey : coordKeys) {
+            BlockPos pointPos = coord_data.getDataMap().get(coordKey);
+            entity.coordData.put(coordKey, pointPos);
+            String pointDimension = dim_data.getDataMap().get(coordKey);
+            entity.dimData.put(coordKey, pointDimension);
+        }
+
+        Map<String, String> levelMap = new HashMap<>();
+        for (String levelString : entity.serverLevels) {
+            levelMap.put(levelString, levelString);
+        }
+
+        PacketHandler.sendToAllClients(new ClientboundTargetMapPacket(pLevel.dimension().location().getPath(), pPos, entity.coordData, entity.dimData));
+        PacketHandler.sendToAllClients(new ClientboundDimListPacket(pLevel.dimension().location().getPath(), pPos, levelMap));
+
+        if (pPlayer instanceof ServerPlayer serverPlayer) {
+            serverPlayer.openMenu(entity, (RegistryFriendlyByteBuf buf) -> buf.writeBlockPos(pPos));
+        }
+        
+        return InteractionResult.CONSUME;
     }
 
     @Override

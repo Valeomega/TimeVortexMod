@@ -85,7 +85,6 @@ public class LaserEntity extends Projectile {
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        super.defineSynchedData(builder);
     }
 
     public void recreateFromPacket(ClientboundAddEntityPacket pPacket) {

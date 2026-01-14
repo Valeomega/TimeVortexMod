@@ -33,15 +33,13 @@ public class ScannerMenu extends AbstractContainerMenu {
         //addPlayerInventory(inv);
         //addPlayerHotbar(inv);
 
-        IItemHandler itemHandler = this.blockEntity.getCapability(Capabilities.ItemHandler.BLOCK, null);
-        if (itemHandler != null) {
-            this.addSlot(new SlotItemHandler(itemHandler, 0, 36, 28));
-            this.addSlot(new SlotItemHandler(itemHandler, 1, 16, 45));
-            this.addSlot(new SlotItemHandler(itemHandler, 2, 56, 45));
-            this.addSlot(new SlotItemHandler(itemHandler, 3, 16, 65));
-            this.addSlot(new SlotItemHandler(itemHandler, 4, 56, 65));
-            this.addSlot(new SlotItemHandler(itemHandler, 5, 36, 82));
-        }
+        IItemHandler itemHandler = this.blockEntity.itemHandler;
+        this.addSlot(new SlotItemHandler(itemHandler, 0, 36, 28));
+        this.addSlot(new SlotItemHandler(itemHandler, 1, 16, 45));
+        this.addSlot(new SlotItemHandler(itemHandler, 2, 56, 45));
+        this.addSlot(new SlotItemHandler(itemHandler, 3, 16, 65));
+        this.addSlot(new SlotItemHandler(itemHandler, 4, 56, 65));
+        this.addSlot(new SlotItemHandler(itemHandler, 5, 36, 82));
 
         addDataSlots(data);
     }

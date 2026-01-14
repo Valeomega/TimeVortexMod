@@ -15,7 +15,7 @@ import net.plaaasma.vortexmod.screen.custom.menu.SizeManipulatorMenu;
 
 public class SizeManipulatorScreen extends AbstractContainerScreen<SizeManipulatorMenu> {
     private static final ResourceLocation TEXTURE =
-            new ResourceLocation(VortexMod.MODID, "textures/gui/size_manipulator_gui.png");
+            ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "textures/gui/size_manipulator_gui.png");
 
     public SizeManipulatorScreen(SizeManipulatorMenu pMenu, Inventory pPlayerInventory, Component pTitle) {
         super(pMenu, pPlayerInventory, pTitle);
@@ -42,7 +42,7 @@ public class SizeManipulatorScreen extends AbstractContainerScreen<SizeManipulat
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        renderBackground(guiGraphics);
+        renderBackground(guiGraphics, 0, 0, 0);
         super.render(guiGraphics, mouseX, mouseY, delta);
         renderTooltip(guiGraphics, mouseX, mouseY);
     }

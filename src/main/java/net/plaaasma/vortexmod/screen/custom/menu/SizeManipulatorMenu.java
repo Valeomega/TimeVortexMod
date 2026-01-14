@@ -33,10 +33,8 @@ public class SizeManipulatorMenu extends AbstractContainerMenu {
         addPlayerInventory(inv);
         addPlayerHotbar(inv);
 
-        IItemHandler itemHandler = this.blockEntity.getCapability(Capabilities.ItemHandler.BLOCK, null);
-        if (itemHandler != null) {
-            this.addSlot(new SlotItemHandler(itemHandler, 0, 80, 35));
-        }
+        IItemHandler itemHandler = this.blockEntity.itemHandler;
+        this.addSlot(new SlotItemHandler(itemHandler, 0, 80, 35));
 
         addDataSlots(data);
     }

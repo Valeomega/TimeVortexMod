@@ -23,13 +23,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class LevelRendererMixin {
 
     @Inject(method="renderSky", at = @At("HEAD"), cancellable = true)
-    public void renderSky(PoseStack pPoseStack, Matrix4f pProjectionMatrix, float pPartialTick, Camera pCamera, boolean pIsFoggy, Runnable pSkyFogSetup, CallbackInfo ci) {
+    public void renderSky(Matrix4f pProjectionMatrix, Matrix4f pPoseMatrix, float pPartialTick, Camera pCamera, boolean pIsFoggy, Runnable pSkyFogSetup, CallbackInfo ci) {
         ClientLevel world = Minecraft.getInstance().level;
         if(world == null) return;
 
         // If in TARDIS dimension, render the custom TARDIS sky :)
         if(ModDimensions.tardisDIM_LEVEL_KEY.equals(world.dimension())) {
-            SkyboxUtil.renderTardisSky(pPoseStack);
+            // Create a PoseStack from the pose matrix for compatibility with existing rendering code
+            PoseStack poseStack = new PoseStack();
+            poseStack.last().pose().set(pPoseMatrix);
+            SkyboxUtil.renderTardisSky(poseStack);
             ci.cancel();
         }
     }

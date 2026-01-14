@@ -2,7 +2,6 @@ package net.plaaasma.vortexmod;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -10,7 +9,12 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.world.chunk.ForcedChunkManager;
+import net.neoforged.neoforge.common.world.chunk.TicketController;
+import net.plaaasma.vortexmod.block.custom.VortexInterfaceBlock;
+import net.neoforged.neoforge.common.world.chunk.RegisterTicketControllersEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.plaaasma.vortexmod.block.ModBlocks;
 import net.plaaasma.vortexmod.block.entity.*;
@@ -46,17 +50,35 @@ public class VortexMod {
         ModEntities.register(modEventBus);
         ModSounds.register(modEventBus);
 
+        // TicketController is created statically in VortexInterfaceBlock
+        // It should be automatically registered when first used
+        LOGGER.info("Mod initialized - TicketController will be available when needed");
+
+        // Register worldgen data
+        // In NeoForge 1.21.1, worldgen data must be provided through datapacks
+        // The RegistrySetBuilder is used by datagen to generate the datapack files
+        // For now, we'll need to generate datapack files or use a different
+        // registration method
+
+        // Register TicketController on the Mod Event Bus
+        modEventBus.addListener(this::registerTicketControllers);
+
         // Register ourselves for server and other game events we are interested in
         NeoForge.EVENT_BUS.register(this);
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
-
+    public void registerTicketControllers(RegisterTicketControllersEvent event) {
+        event.register(VortexInterfaceBlock.getTicketController());
     }
 
-    // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
+    @SubscribeEvent
+    public void onServerStarting(ServerStartingEvent event) {
+        // Server starting logic
+    }
+
+    // You can use EventBusSubscriber to automatically register all static methods
+    // in the class annotated with @SubscribeEvent
     @EventBusSubscriber(modid = MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents {
         @SubscribeEvent
@@ -79,9 +101,7 @@ public class VortexMod {
 
             EntityRenderers.register(ModEntities.TARDIS.get(), TardisRenderer::new);
 
-            MenuScreens.register(ModMenuTypes.SIZE_MANIPULATOR_MENU.get(), SizeManipulatorScreen::new);
-            MenuScreens.register(ModMenuTypes.KEYPAD_MENU.get(), KeypadScreen::new);
-            MenuScreens.register(ModMenuTypes.SCANNER_MENU.get(), ScannerScreen::new);
+            // Menu screen registration is handled in ModEventBusClientEvents.onClientSetup
         }
     }
 }

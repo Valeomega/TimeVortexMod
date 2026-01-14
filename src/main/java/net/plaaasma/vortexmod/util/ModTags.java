@@ -13,7 +13,7 @@ public class ModTags {
         public static final TagKey<Block> PLACEHOLDER = tag("placeholder");
 
         private static TagKey<Block> tag(String name) {
-            return BlockTags.create(new ResourceLocation(VortexMod.MODID, name));
+            return BlockTags.create(ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, name));
         }
     }
 
@@ -21,7 +21,7 @@ public class ModTags {
         public static final TagKey<Item> PLACEHOLDER = tag("placeholder");
 
         private static TagKey<Item> tag(String name) {
-            return ItemTags.create(new ResourceLocation(VortexMod.MODID, name));
+            return ItemTags.create(ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, name));
         }
     }
 }

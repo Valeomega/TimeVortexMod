@@ -65,6 +65,10 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
     public static final MapCodec<VortexInterfaceBlock> CODEC = BlockBehaviour.simpleCodec(VortexInterfaceBlock::new);
     private static final TicketController CHUNK_TICKET_CONTROLLER =
             new TicketController(ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "chunk_tickets"));
+    
+    public static TicketController getTicketController() {
+        return CHUNK_TICKET_CONTROLLER;
+    }
 
     public VortexInterfaceBlock(Properties pProperties) {
         super(pProperties);
@@ -134,20 +138,31 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
 
                 int greatest_x_coordinate = -1000000;
                 int greatest_z_coordinate = -1000000;
-                for (String key : keyList) {
-                    BlockPos interiorPos = data.getDataMap().get(key);
-                    int x_coordinate = interiorPos.getX();
-                    int z_coordinate = interiorPos.getZ();
-                    if (key.equals(Integer.toString(ownerCode))) {
-                        greatest_x_coordinate = x_coordinate;
-                        greatest_z_coordinate = z_coordinate;
-                        break;
+                
+                // First, try to find existing entry for this owner
+                String ownerKey = Integer.toString(ownerCode);
+                if (data.getDataMap().containsKey(ownerKey)) {
+                    BlockPos interiorPos = data.getDataMap().get(ownerKey);
+                    greatest_x_coordinate = interiorPos.getX();
+                    greatest_z_coordinate = interiorPos.getZ();
+                } else {
+                    // If no entry for owner, find the maximum coordinates from all entries
+                    for (String key : keyList) {
+                        BlockPos interiorPos = data.getDataMap().get(key);
+                        int x_coordinate = interiorPos.getX();
+                        int z_coordinate = interiorPos.getZ();
+                        if (x_coordinate > greatest_x_coordinate) {
+                            greatest_x_coordinate = x_coordinate;
+                        }
+                        if (z_coordinate > greatest_z_coordinate) {
+                            greatest_z_coordinate = z_coordinate;
+                        }
                     }
-                    if (x_coordinate > greatest_x_coordinate) {
-                        greatest_x_coordinate = x_coordinate;
-                    }
-                    if (z_coordinate > greatest_z_coordinate) {
-                        greatest_z_coordinate = z_coordinate;
+                    
+                    // If still no coordinates found, use a default location
+                    if (greatest_x_coordinate == -1000000 && greatest_z_coordinate == -1000000) {
+                        greatest_x_coordinate = 0;
+                        greatest_z_coordinate = 0;
                     }
                 }
 
@@ -257,19 +272,104 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
 
                 tardisDimension.setBlockAndUpdate(tardisTarget, ModBlocks.DOOR_BLOCK.get().defaultBlockState());
 
+                // Ensure interfacePos is set - if not found in loop, use the position where the interface was copied
+                if (interfacePos == null) {
+                    // Find the interface position in the tardis dimension (where we copied the interface block)
+                    for (int x = -size; x <= size; x++) {
+                        for (int y = -1; y <= y_size + (y_size - 1); y++) {
+                            for (int z = -size; z <= size; z++) {
+                                BlockPos currentTargetPos = tardisTarget.offset(x + door_distance, y, z);
+                                BlockEntity blockEntity = tardisDimension.getBlockEntity(currentTargetPos);
+                                if (blockEntity instanceof VortexInterfaceBlockEntity) {
+                                    interfacePos = currentTargetPos;
+                                    break;
+                                }
+                            }
+                            if (interfacePos != null) break;
+                        }
+                        if (interfacePos != null) break;
+                    }
+                    // If still not found, use a position near the door
+                    if (interfacePos == null) {
+                        interfacePos = tardisTarget.offset(door_distance, 0, 0);
+                    }
+                }
+
+                if (interfacePos == null) {
+                    pPlayer.displayClientMessage(Component.literal("Error: Could not determine interface position").withStyle(ChatFormatting.RED), false);
+                    return InteractionResult.CONSUME;
+                }
+
                 VortexInterfaceBlockEntity interfaceBlockEntity = (VortexInterfaceBlockEntity) tardisDimension.getBlockEntity(interfacePos);
+                
+                if (interfaceBlockEntity == null) {
+                    // Try to create the interface block if it doesn't exist
+                    tardisDimension.setBlockAndUpdate(interfacePos, ModBlocks.INTERFACE_BLOCK.get().defaultBlockState());
+                    interfaceBlockEntity = (VortexInterfaceBlockEntity) tardisDimension.getBlockEntity(interfacePos);
+                    if (interfaceBlockEntity == null) {
+                        pPlayer.displayClientMessage(Component.literal("Error: Could not create interface in TARDIS dimension").withStyle(ChatFormatting.RED), false);
+                        return InteractionResult.CONSUME;
+                    }
+                }
 
-                TardisEntity tardisMob = ModEntities.TARDIS.get().spawn(serverLevel, pPos, MobSpawnType.NATURAL);
-                serverLevel.addFreshEntity(tardisMob);
-
-                tardisMob.setOwnerID(ownerCode);
-                interfaceBlockEntity.setExtUUID(tardisMob.getUUID());
-                data.getDataMap().put(tardisMob.getUUID().toString(), tardisTarget);
+                // Check if there's already a TardisEntity - reuse it instead of creating a new one
+                UUID oldExtUUID = localBlockEntity.getExtUUID();
+                TardisEntity tardisMob = null;
+                
+                if (oldExtUUID != null) {
+                    // Search all dimensions for existing TardisEntity
+                    Iterable<ServerLevel> allLevels = minecraftserver.getAllLevels();
+                    for (ServerLevel level : allLevels) {
+                        TardisEntity existingTardis = (TardisEntity) level.getEntity(oldExtUUID);
+                        if (existingTardis != null) {
+                            tardisMob = existingTardis;
+                            // Update the existing TardisEntity's position if needed
+                            if (tardisMob.level() != serverLevel) {
+                                tardisMob.teleportToWithTicket(serverLevel, pPos.getX() + 0.5, pPos.getY(), pPos.getZ() + 0.5, tardisMob.getYRot(), tardisMob.getXRot());
+                            } else {
+                                tardisMob.setPos(pPos.getX() + 0.5, pPos.getY(), pPos.getZ() + 0.5);
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                // Only create a new TardisEntity if one doesn't exist
+                if (tardisMob == null) {
+                    tardisMob = ModEntities.TARDIS.get().spawn(serverLevel, pPos, MobSpawnType.NATURAL);
+                    if (tardisMob != null && !tardisMob.isRemoved()) {
+                        // Check if entity was already added (avoid duplicates)
+                        if (serverLevel.getEntity(tardisMob.getUUID()) == null) {
+                            serverLevel.addFreshEntity(tardisMob);
+                        } else {
+                            tardisMob = (TardisEntity) serverLevel.getEntity(tardisMob.getUUID());
+                        }
+                        tardisMob.setOwnerID(ownerCode);
+                        interfaceBlockEntity.setExtUUID(tardisMob.getUUID());
+                        data.getDataMap().put(tardisMob.getUUID().toString(), tardisTarget);
+                    }
+                } else {
+                    // Update the existing TardisEntity's owner and link
+                    if (!tardisMob.isRemoved()) {
+                        tardisMob.setOwnerID(ownerCode);
+                        interfaceBlockEntity.setExtUUID(tardisMob.getUUID());
+                        // Update the location map data
+                        data.getDataMap().put(tardisMob.getUUID().toString(), tardisTarget);
+                    }
+                }
 
                 ChunkPos chunkPos = tardisDimension.getChunkAt(interfacePos).getPos();
-                CHUNK_TICKET_CONTROLLER.forceChunk(tardisDimension, interfacePos, chunkPos.x, chunkPos.z, true, true);
+                try {
+                    CHUNK_TICKET_CONTROLLER.forceChunk(tardisDimension, interfacePos, chunkPos.x, chunkPos.z, true, true);
+                } catch (IllegalArgumentException e) {
+                    VortexMod.LOGGER.warn("Failed to force chunk for TARDIS dimension: {}", e.getMessage());
+                }
                 chunkPos = serverLevel.getChunkAt(pPos).getPos();
-                CHUNK_TICKET_CONTROLLER.forceChunk(serverLevel, pPos, chunkPos.x, chunkPos.z, true, true);
+                try {
+                    CHUNK_TICKET_CONTROLLER.forceChunk(serverLevel, pPos, chunkPos.x, chunkPos.z, true, true);
+                } catch (IllegalArgumentException e) {
+                    VortexMod.LOGGER.warn("Failed to force chunk for server level: {}", e.getMessage());
+                }
 
                 pPlayer.setItemInHand(pHand, new ItemStack(ModItems.TARDIS_KEY.get(), 1));
 
@@ -311,7 +411,11 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
     public void onPlace(BlockState pState, Level pLevel, BlockPos pPos, BlockState pOldState, boolean pMovedByPiston) {
         if (pLevel instanceof ServerLevel serverLevel) {
             ChunkPos chunkPos = serverLevel.getChunkAt(pPos).getPos();
-            CHUNK_TICKET_CONTROLLER.forceChunk(serverLevel, pPos, chunkPos.x, chunkPos.z, true, true);
+            try {
+                CHUNK_TICKET_CONTROLLER.forceChunk(serverLevel, pPos, chunkPos.x, chunkPos.z, true, true);
+            } catch (IllegalArgumentException e) {
+                VortexMod.LOGGER.warn("Failed to force chunk on place: {}", e.getMessage());
+            }
         }
 
         super.onPlace(pState, pLevel, pPos, pOldState, pMovedByPiston);

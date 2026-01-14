@@ -14,25 +14,26 @@ import net.plaaasma.vortexmod.VortexMod;
 import java.util.HashMap;
 import java.util.Map;
 
-public record ClientboundMonitorDataPacket(BlockPos targetPos, Map<Integer, Integer> fromTag, String targetDim, String currentDim) implements CustomPacketPayload {
-    public static final Type<ClientboundMonitorDataPacket> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "clientbound_monitor_data"));
+public record ClientboundMonitorDataPacket(BlockPos targetPos, Map<Integer, Integer> fromTag, String targetDim,
+        String currentDim) implements CustomPacketPayload {
+    public static final Type<ClientboundMonitorDataPacket> TYPE = new Type<>(
+            ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "clientbound_monitor_data"));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, ClientboundMonitorDataPacket> STREAM_CODEC =
-            StreamCodec.of(ClientboundMonitorDataPacket::encode, ClientboundMonitorDataPacket::decode);
+    public static final StreamCodec<RegistryFriendlyByteBuf, ClientboundMonitorDataPacket> STREAM_CODEC = StreamCodec
+            .of(ClientboundMonitorDataPacket::encode, ClientboundMonitorDataPacket::decode);
 
     public static ClientboundMonitorDataPacket decode(RegistryFriendlyByteBuf buffer) {
+        BlockPos targetPos = buffer.readBlockPos();
         int mapSize = buffer.readVarInt();
         Map<Integer, Integer> fromTag = new HashMap<>(mapSize);
         for (int i = 0; i < mapSize; i++) {
             fromTag.put(buffer.readVarInt(), buffer.readVarInt());
         }
         return new ClientboundMonitorDataPacket(
-                buffer.readBlockPos(),
+                targetPos,
                 fromTag,
                 buffer.readUtf(),
-                buffer.readUtf()
-        );
+                buffer.readUtf());
     }
 
     public static void encode(RegistryFriendlyByteBuf buffer, ClientboundMonitorDataPacket packet) {
@@ -55,10 +56,12 @@ public record ClientboundMonitorDataPacket(BlockPos targetPos, Map<Integer, Inte
         context.enqueueWork(() -> {
             Minecraft client = Minecraft.getInstance();
             ClientLevel clientLevel = client.level;
-            if (clientLevel == null) return;
+            if (clientLevel == null)
+                return;
 
             MonitorBlockEntity monitorBlockEntity = (MonitorBlockEntity) clientLevel.getBlockEntity(this.targetPos);
-            if (monitorBlockEntity == null) return;
+            if (monitorBlockEntity == null)
+                return;
 
             for (Map.Entry<Integer, Integer> entry : this.fromTag.entrySet()) {
                 monitorBlockEntity.data.set(entry.getKey(), entry.getValue());

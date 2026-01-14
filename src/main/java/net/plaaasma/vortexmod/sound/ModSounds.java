@@ -35,7 +35,7 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> DALEK_EXTERMINATE_SOUND = registerSoundEvents("dalek_exterminate_sound");
 
     private static DeferredHolder<SoundEvent, SoundEvent> registerSoundEvents(String sound) {
-        return SOUND_EVENTS.register(sound, () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(VortexMod.MODID, sound)));
+        return SOUND_EVENTS.register(sound, () -> SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, sound)));
     }
 
     public static void register(IEventBus eventBus) {

@@ -48,9 +48,9 @@ public class KeypadScreen extends AbstractContainerScreen<KeypadMenu> {
     private CustomButton delete_button;
 
     private static final ResourceLocation TEXTURE =
-            new ResourceLocation(VortexMod.MODID, "textures/gui/keypad_gui.png");
+            ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "textures/gui/keypad_gui.png");
     private static final ResourceLocation TEXTURE_SECONDARY =
-            new ResourceLocation(VortexMod.MODID, "textures/gui/keypad_gui_locations.png");
+            ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "textures/gui/keypad_gui_locations.png");
 
     public KeypadScreen(KeypadMenu pMenu, Inventory pPlayerInventory, Component pTitle) {
         super(pMenu, pPlayerInventory, pTitle);
@@ -228,7 +228,7 @@ public class KeypadScreen extends AbstractContainerScreen<KeypadMenu> {
     }
 
     @Override
-    public boolean mouseScrolled(double pMouseX, double pMouseY, double pScrollX) {
+    public boolean mouseScrolled(double pMouseX, double pMouseY, double pScrollX, double pScrollY) {
         if (this.dimension.isHovered()) {
             List<String> oldLevels = new ArrayList<>(this.menu.blockEntity.serverLevels);
             List<String> levels = new ArrayList<>();
@@ -247,7 +247,7 @@ public class KeypadScreen extends AbstractContainerScreen<KeypadMenu> {
                 this.selected_dim_index = 0;
             }
             else {
-                this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.get(), 0.5f, 2f);
+                this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5f, 2f);
             }
             if (this.selected_dim_index == 0) {
                 this.dimension.setValue("");
@@ -280,14 +280,14 @@ public class KeypadScreen extends AbstractContainerScreen<KeypadMenu> {
                 this.selected_location_index = 0;
             }
             else {
-                this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.get(), 0.5f, 2f);
+                this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5f, 2f);
             }
             if (this.selected_location_index == 0) {
                 this.name.setValue("");
             }
         }
 
-        return super.mouseScrolled(pMouseX, pMouseY, pScrollX);
+        return super.mouseScrolled(pMouseX, pMouseY, pScrollX, pScrollY);
     }
 
     String centerTooltipText(String text, int maxWidth) {
@@ -395,7 +395,7 @@ public class KeypadScreen extends AbstractContainerScreen<KeypadMenu> {
                 this.selected_dim_index = 0;
             }
             else {
-                this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.get(), 0.5f, 2f);
+                this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5f, 2f);
             }
             if (this.selected_dim_index == 0) {
                 this.dimension.setValue("");
@@ -433,7 +433,7 @@ public class KeypadScreen extends AbstractContainerScreen<KeypadMenu> {
                 this.selected_location_index = 0;
             }
             else {
-                this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.get(), 0.5f, 2f);
+                this.minecraft.player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5f, 2f);
             }
             if (this.selected_location_index == 0) {
                 this.name.setValue("");
@@ -464,7 +464,7 @@ public class KeypadScreen extends AbstractContainerScreen<KeypadMenu> {
         return new FocusNavigationEvent.TabNavigation(flag);
     }
 
-    private void clearFocus() {
+    public void clearFocus() {
         ComponentPath componentpath = this.getCurrentFocusPath();
         if (componentpath != null) {
             componentpath.applyFocus(false);
@@ -762,7 +762,7 @@ public class KeypadScreen extends AbstractContainerScreen<KeypadMenu> {
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
 
-        renderBackground(guiGraphics);
+        renderBackground(guiGraphics, 0, 0, 0);
         super.render(guiGraphics, mouseX, mouseY, delta);
         renderTooltip(guiGraphics, mouseX, mouseY);
 
