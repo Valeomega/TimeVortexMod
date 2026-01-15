@@ -27,3 +27,6 @@ forge*changelog.txt
 /run-data/
 /src/generated/
 build_error*.log
+
+# Secrets
+.env
