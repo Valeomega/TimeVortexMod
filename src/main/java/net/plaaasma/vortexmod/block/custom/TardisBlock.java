@@ -10,6 +10,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -77,13 +78,24 @@ public class TardisBlock extends HorizontalBaseEntityBlock {
     }
 
     @Override
+    public void setPlacedBy(Level pLevel, BlockPos pPos, BlockState pState, @Nullable LivingEntity pPlacer, ItemStack pStack) {
+        if (pLevel instanceof ServerLevel serverLevel) {
+            TardisBlockEntity blockEntity = (TardisBlockEntity) serverLevel.getBlockEntity(pPos);
+            if (pPlacer instanceof Player player && blockEntity != null) {
+                blockEntity.owner = player.getUUID();
+                blockEntity.setChanged();
+            }
+        }
+    }
+
+    @Override
     protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHit) {
         if (pLevel instanceof ServerLevel serverLevel) {
             TardisBlockEntity blockEntity = (TardisBlockEntity) serverLevel.getBlockEntity(pPos);
 
             TardisEntity tardisMob = ModEntities.TARDIS.get().spawn(serverLevel, pPos, MobSpawnType.NATURAL);
             tardisMob.tick();
-            tardisMob.setOwnerID(blockEntity.data.get(0));
+            tardisMob.setOwnerID(blockEntity.owner);
             tardisMob.setLocked(blockEntity.data.get(1) == 1);
             tardisMob.setHasBioSecurity(blockEntity.data.get(2) == 1);
             serverLevel.removeBlock(pPos, false);

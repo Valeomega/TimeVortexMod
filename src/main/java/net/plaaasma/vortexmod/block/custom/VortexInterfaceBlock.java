@@ -124,9 +124,9 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
             }
 
             VortexInterfaceBlockEntity localBlockEntity = (VortexInterfaceBlockEntity) serverLevel.getBlockEntity(pPos);
-            int ownerCode = localBlockEntity.data.get(2);
-            if (ownerCode == 0) {
-                localBlockEntity.data.set(2, pPlayer.getScoreboardName().hashCode());
+            UUID ownerCode = localBlockEntity.getOwner();
+            if (ownerCode == null) {
+                localBlockEntity.setOwner(pPlayer.getUUID());
                 pPlayer.displayClientMessage(Component.literal("TARDIS owner set to " + pPlayer.getScoreboardName()).withStyle(ChatFormatting.AQUA), true);
                 return InteractionResult.CONSUME;
             }
@@ -140,7 +140,7 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
                 int greatest_z_coordinate = -1000000;
                 
                 // First, try to find existing entry for this owner
-                String ownerKey = Integer.toString(ownerCode);
+                String ownerKey = ownerCode.toString();
                 if (data.getDataMap().containsKey(ownerKey)) {
                     BlockPos interiorPos = data.getDataMap().get(ownerKey);
                     greatest_x_coordinate = interiorPos.getX();

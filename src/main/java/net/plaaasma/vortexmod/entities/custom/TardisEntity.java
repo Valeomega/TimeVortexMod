@@ -55,7 +55,7 @@ import javax.sound.midi.SysexMessage;
 import java.util.*;
 
 public class TardisEntity extends Mob {
-    private static final EntityDataAccessor<Integer> DATA_OWNERID_ID = SynchedEntityData.defineId(TardisEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Optional<UUID>> DATA_OWNER_UUID = SynchedEntityData.defineId(TardisEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Boolean> DATA_LOCKED_ID = SynchedEntityData.defineId(TardisEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_HAS_BIO_SECURITY_ID = SynchedEntityData.defineId(TardisEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_IN_FLIGHT_ID = SynchedEntityData.defineId(TardisEntity.class, EntityDataSerializers.BOOLEAN);
@@ -78,7 +78,9 @@ public class TardisEntity extends Mob {
     @Override
     public void addAdditionalSaveData(CompoundTag pCompound) {
         super.addAdditionalSaveData(pCompound);
-        pCompound.putInt("Owner", this.entityData.get(DATA_OWNERID_ID));
+        if (this.entityData.get(DATA_OWNER_UUID).isPresent()) {
+            pCompound.putUUID("OwnerUUID", this.entityData.get(DATA_OWNER_UUID).get());
+        }
         pCompound.putBoolean("Locked", this.entityData.get(DATA_LOCKED_ID));
         pCompound.putBoolean("HasBio", this.entityData.get(DATA_HAS_BIO_SECURITY_ID));
         pCompound.putBoolean("InFlight", this.entityData.get(DATA_IN_FLIGHT_ID));
@@ -98,7 +100,9 @@ public class TardisEntity extends Mob {
     @Override
     public void readAdditionalSaveData(CompoundTag pCompound) {
         super.readAdditionalSaveData(pCompound);
-        this.entityData.set(DATA_OWNERID_ID, pCompound.getInt("Owner"));
+        if (pCompound.hasUUID("OwnerUUID")) {
+            this.entityData.set(DATA_OWNER_UUID, Optional.of(pCompound.getUUID("OwnerUUID")));
+        }
         this.entityData.set(DATA_LOCKED_ID, pCompound.getBoolean("Locked"));
         this.entityData.set(DATA_HAS_BIO_SECURITY_ID, pCompound.getBoolean("HasBio"));
         this.entityData.set(DATA_IN_FLIGHT_ID, pCompound.getBoolean("InFlight"));
@@ -124,7 +128,7 @@ public class TardisEntity extends Mob {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-        builder.define(DATA_OWNERID_ID, 0);
+        builder.define(DATA_OWNER_UUID, Optional.empty());
         builder.define(DATA_LOCKED_ID, false);
         builder.define(DATA_HAS_BIO_SECURITY_ID, false);
         builder.define(DATA_IN_FLIGHT_ID, false);
@@ -150,8 +154,8 @@ public class TardisEntity extends Mob {
                 .add(Attributes.KNOCKBACK_RESISTANCE, Integer.MAX_VALUE);
     }
 
-    public void setOwnerID(int ownerID) {
-        this.entityData.set(DATA_OWNERID_ID, ownerID);
+    public void setOwnerID(UUID ownerID) {
+        this.entityData.set(DATA_OWNER_UUID, Optional.ofNullable(ownerID));
     }
 
     public void setLocked(boolean locked) {
@@ -196,8 +200,8 @@ public class TardisEntity extends Mob {
         entityData.set(DATA_SIGN_ID, signText);
     }
 
-    public int getOwnerID() {
-        return this.entityData.get(DATA_OWNERID_ID);
+    public UUID getOwnerID() {
+        return this.entityData.get(DATA_OWNER_UUID).orElse(null);
     }
 
     public float getAlpha() {
@@ -287,11 +291,10 @@ public class TardisEntity extends Mob {
             ServerLevel overworld = minecraftserver.getLevel(Level.OVERWORLD);
             SecurityMapData security_data = SecurityMapData.get(overworld);
             LocationMapData data = LocationMapData.get(overworld);
-            int ownerCode = this.entityData.get(DATA_OWNERID_ID);
             ItemStack heldStack = pPlayer.getItemInHand(pHand);
 
             if (heldStack.is(ModItems.TARDIS_KEY.get())) {
-                if (ownerCode == pPlayer.getScoreboardName().hashCode()) {
+                if (this.entityData.get(DATA_OWNER_UUID).isPresent() && this.entityData.get(DATA_OWNER_UUID).get().equals(pPlayer.getUUID())) {
                     if (!this.entityData.get(DATA_LOCKED_ID)) {
                         this.entityData.set(DATA_LOCKED_ID, true);
                         pPlayer.displayClientMessage(Component.literal("Locking TARDIS").withStyle(ChatFormatting.GREEN), true);
@@ -321,12 +324,19 @@ public class TardisEntity extends Mob {
                                 }
                             }
 
-                            if (pPlayer.getScoreboardName().hashCode() == ownerCode || !hasBioSecurity || whitelistedCodes.contains(pPlayer.getScoreboardName()) || pPlayer.isSpectator()) {
+                            if ((this.entityData.get(DATA_OWNER_UUID).isPresent() && pPlayer.getUUID().equals(this.entityData.get(DATA_OWNER_UUID).get())) || !hasBioSecurity || whitelistedCodes.contains(pPlayer.getScoreboardName()) || pPlayer.isSpectator()) {
                                 BlockPos blockTardisTarget;
 
                                 if (!data.getDataMap().containsKey(this.getUUID().toString())) {
-                                    blockTardisTarget = data.getDataMap().get(Integer.toString(ownerCode));
-                                    data.getDataMap().put(this.getUUID().toString(), blockTardisTarget);
+                                    if (this.entityData.get(DATA_OWNER_UUID).isPresent()) {
+                                        blockTardisTarget = data.getDataMap().get(this.entityData.get(DATA_OWNER_UUID).get().toString());
+                                        if (blockTardisTarget == null) {
+                                            blockTardisTarget = this.blockPosition(); // Fallback
+                                        }
+                                        data.getDataMap().put(this.getUUID().toString(), blockTardisTarget);
+                                    } else {
+                                        blockTardisTarget = this.blockPosition();
+                                    }
                                 }
                                 else {
                                     blockTardisTarget = data.getDataMap().get(this.getUUID().toString());
@@ -498,7 +508,7 @@ public class TardisEntity extends Mob {
             }
         }
         else if (this.level() instanceof ClientLevel clientLevel) {
-            if (Minecraft.getInstance().isSingleplayer()) {
+            if (true) {
                 String targetDimension = this.entityData.get(DATA_LEVEL_ID);
                 Vec3 target = new Vec3(this.entityData.get(DATA_TARGET_X_ID), this.entityData.get(DATA_TARGET_Y_ID), this.entityData.get(DATA_TARGET_Z_ID));
                 int rotation_yaw = this.entityData.get(DATA_ROTATION_ID);

@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 import java.util.random.RandomGenerator;
 
 public class DoorBlock extends Block {
@@ -99,8 +100,8 @@ public class DoorBlock extends Block {
                                 TardisEntity tardisEntity = (TardisEntity) targetDimension.getEntity(vortexInterfaceBlockEntity.getExtUUID());
                                 if (tardisEntity != null) {
                                     if (heldStack.is(ModItems.TARDIS_KEY.get())) {
-                                        int ownerCode = tardisEntity.getOwnerID();
-                                        if (ownerCode == pPlayer.getScoreboardName().hashCode()) {
+                                        UUID ownerCode = tardisEntity.getOwnerID();
+                                        if (ownerCode != null && ownerCode.equals(pPlayer.getUUID())) {
                                             if (!tardisEntity.isLocked()) {
                                                 tardisEntity.setLocked(true);
                                                 pPlayer.displayClientMessage(Component.literal("Locking TARDIS").withStyle(ChatFormatting.GREEN), true);

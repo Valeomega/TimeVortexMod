@@ -58,7 +58,7 @@ import java.util.*;
 public class VortexInterfaceBlockEntity extends BlockEntity {
     private int ticks = 0;
     private int last_tick = 0;
-    private int owner = 0;
+    private UUID owner = null;
     private int target_x = 0;
     private int target_y = 0;
     private int target_z = 0;
@@ -95,7 +95,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                 return switch (pIndex) {
                     case 0 -> VortexInterfaceBlockEntity.this.ticks;
                     case 1 -> VortexInterfaceBlockEntity.this.last_tick;
-                    case 2 -> VortexInterfaceBlockEntity.this.owner;
+                    case 2 -> 0; // Deprecated owner sync
                     case 3 -> VortexInterfaceBlockEntity.this.target_x;
                     case 4 -> VortexInterfaceBlockEntity.this.target_y;
                     case 5 -> VortexInterfaceBlockEntity.this.target_z;
@@ -127,7 +127,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                 switch (pIndex) {
                     case 0 -> VortexInterfaceBlockEntity.this.ticks = pValue;
                     case 1 -> VortexInterfaceBlockEntity.this.last_tick = pValue;
-                    case 2 -> VortexInterfaceBlockEntity.this.owner = pValue;
+                    case 2 -> { } // Deprecated owner sync
                     case 3 -> VortexInterfaceBlockEntity.this.target_x = pValue;
                     case 4 -> VortexInterfaceBlockEntity.this.target_y = pValue;
                     case 5 -> VortexInterfaceBlockEntity.this.target_z = pValue;
@@ -179,7 +179,9 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
         this.ticks = vortexModData.getInt("ticks");
         this.last_tick = vortexModData.getInt("last_tick");
-        this.owner = vortexModData.getInt("owner");
+        if (vortexModData.hasUUID("owner")) {
+            this.owner = vortexModData.getUUID("owner");
+        }
         this.target_x = vortexModData.getInt("target_x");
         this.target_y = vortexModData.getInt("target_y");
         this.target_z = vortexModData.getInt("target_z");
@@ -217,7 +219,9 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
         vortexModData.putInt("ticks", this.ticks);
         vortexModData.putInt("last_tick", this.last_tick);
-        vortexModData.putInt("owner", this.owner);
+        if (this.owner != null) {
+            vortexModData.putUUID("owner", this.owner);
+        }
         vortexModData.putInt("target_x", this.target_x);
         vortexModData.putInt("target_y", this.target_y);
         vortexModData.putInt("target_z", this.target_z);
@@ -575,7 +579,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             if (pLevel == tardisDimension) {
                 proto = false;
                 if (tardisEntity != null) {
-                    tardisEntity.setOwnerID(this.data.get(2));
+                    tardisEntity.setOwnerID(this.owner);
                 }
             }
 
@@ -3145,6 +3149,15 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                         player.getXRot(), DimensionTransition.DO_NOTHING));
             }
         }
+    }
+
+    public UUID getOwner() {
+        return this.owner;
+    }
+
+    public void setOwner(UUID owner) {
+        this.owner = owner;
+        setChanged();
     }
 
     private static class TeleportationDetails {

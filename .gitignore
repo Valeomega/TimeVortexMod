@@ -30,3 +30,6 @@ build_error*.log
 
 # Secrets
 .env
+
+# Build outputs logic
+build_output*.txt
