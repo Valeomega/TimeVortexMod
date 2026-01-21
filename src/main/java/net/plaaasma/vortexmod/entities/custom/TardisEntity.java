@@ -508,17 +508,8 @@ public class TardisEntity extends Mob {
             }
         }
         else if (this.level() instanceof ClientLevel clientLevel) {
-            if (true) {
-                String targetDimension = this.entityData.get(DATA_LEVEL_ID);
-                Vec3 target = new Vec3(this.entityData.get(DATA_TARGET_X_ID), this.entityData.get(DATA_TARGET_Y_ID), this.entityData.get(DATA_TARGET_Z_ID));
-                int rotation_yaw = this.entityData.get(DATA_ROTATION_ID);
-
-                if ((!(this.position().x == target.x && this.position().y == target.y && this.position().z == target.z)) && !this.isFallFlying()) {
-                    if (this.level().dimension().toString().equals(targetDimension)) {
-                        this.moveTo(target.x, target.y, target.z, rotation_yaw, 0);
-                    }
-                }
-            }
+            // Client-side entity position is handled by vanilla entity tracking.
+            // Manual moveTo() calls caused issues with animation interpolation.
         }
 
         super.tick();

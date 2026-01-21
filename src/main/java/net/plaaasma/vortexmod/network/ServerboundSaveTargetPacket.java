@@ -121,7 +121,7 @@ public class ServerboundSaveTargetPacket implements CustomPacketPayload {
                 }
 
                 if (core_found && has_components && designatorEntity != null) {
-                    int dim_hash = vortexInterfaceBlockEntity.data.get(10);
+                    int dim_hash = vortexInterfaceBlockEntity.data.get(9);
 
                     Iterable<ServerLevel> serverLevels = minecraftserver.getAllLevels();
                     ServerLevel currentLevel = level;
@@ -132,13 +132,13 @@ public class ServerboundSaveTargetPacket implements CustomPacketPayload {
                         }
                     }
 
-                    BlockPos targetVec = new BlockPos(vortexInterfaceBlockEntity.data.get(3), vortexInterfaceBlockEntity.data.get(4), vortexInterfaceBlockEntity.data.get(5));
+                    BlockPos currentVec = new BlockPos(vortexInterfaceBlockEntity.data.get(6), vortexInterfaceBlockEntity.data.get(7), vortexInterfaceBlockEntity.data.get(8));
 
-                    coord_data.getDataMap().put(player.getScoreboardName() + this.save_name, targetVec);
+                    coord_data.getDataMap().put(player.getScoreboardName() + this.save_name, currentVec);
                     rotation_data.getDataMap().put(player.getScoreboardName() + this.save_name, vortexInterfaceBlockEntity.data.get(12));
                     dim_data.getDataMap().put(player.getScoreboardName() + this.save_name, currentLevel.dimension().location().getPath());
 
-                    player.displayClientMessage(Component.literal("Adding the current target coordinates (" + targetVec.getX() + " " + targetVec.getY() + " " + targetVec.getZ() + " | " + currentLevel.dimension().location().getPath() + ") as " + this.save_name), false);
+                    player.displayClientMessage(Component.literal("Saving your current location (" + currentVec.getX() + " " + currentVec.getY() + " " + currentVec.getZ() + " | " + currentLevel.dimension().location().getPath() + ") as " + this.save_name), false);
                     coord_data.setDirty();
                     rotation_data.setDirty();
                     dim_data.setDirty();

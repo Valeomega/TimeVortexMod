@@ -32,6 +32,7 @@ public class ModEvents {
         new SecurityCommand(event.getDispatcher());
         new ExteriorCommand(event.getDispatcher());
         new DisruptorCommand(event.getDispatcher());
+        new DeleteTardisCommand(event.getDispatcher());
 
         ConfigCommand.register(event.getDispatcher());
     }

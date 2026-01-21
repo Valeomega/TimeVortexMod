@@ -97,48 +97,62 @@ public class DoorBlock extends Block {
                                 }
 
                                 BlockPos blockExitPos = new BlockPos(vortexInterfaceBlockEntity.data.get(6), vortexInterfaceBlockEntity.data.get(7), vortexInterfaceBlockEntity.data.get(8));
-                                TardisEntity tardisEntity = (TardisEntity) targetDimension.getEntity(vortexInterfaceBlockEntity.getExtUUID());
-                                if (tardisEntity != null) {
-                                    if (heldStack.is(ModItems.TARDIS_KEY.get())) {
-                                        UUID ownerCode = tardisEntity.getOwnerID();
-                                        if (ownerCode != null && ownerCode.equals(pPlayer.getUUID())) {
-                                            if (!tardisEntity.isLocked()) {
-                                                tardisEntity.setLocked(true);
-                                                pPlayer.displayClientMessage(Component.literal("Locking TARDIS").withStyle(ChatFormatting.GREEN), true);
-                                            } else {
-                                                tardisEntity.setLocked(false);
-                                                pPlayer.displayClientMessage(Component.literal("Unlocking TARDIS").withStyle(ChatFormatting.AQUA), true);
-                                            }
+                                
+                                // Search all dimensions for the TARDIS entity
+                                TardisEntity tardisEntity = null;
+                                for (ServerLevel cLevel : serverLevels) {
+                                    TardisEntity foundEntity = (TardisEntity) cLevel.getEntity(vortexInterfaceBlockEntity.getExtUUID());
+                                    if (foundEntity != null) {
+                                        tardisEntity = foundEntity;
+                                        targetDimension = cLevel;
+                                        break;
+                                    }
+                                }
+                                
+                                if (tardisEntity == null) {
+                                    pPlayer.displayClientMessage(Component.literal("Cannot find TARDIS exterior. It may be respawning.").withStyle(ChatFormatting.RED), true);
+                                    return InteractionResult.CONSUME;
+                                }
+                                
+                                if (heldStack.is(ModItems.TARDIS_KEY.get())) {
+                                    UUID ownerCode = tardisEntity.getOwnerID();
+                                    if (ownerCode != null && ownerCode.equals(pPlayer.getUUID())) {
+                                        if (!tardisEntity.isLocked()) {
+                                            tardisEntity.setLocked(true);
+                                            pPlayer.displayClientMessage(Component.literal("Locking TARDIS").withStyle(ChatFormatting.GREEN), true);
                                         } else {
-                                            pPlayer.displayClientMessage(Component.literal("This TARDIS is not yours.").withStyle(ChatFormatting.RED), true);
+                                            tardisEntity.setLocked(false);
+                                            pPlayer.displayClientMessage(Component.literal("Unlocking TARDIS").withStyle(ChatFormatting.AQUA), true);
                                         }
                                     } else {
-                                        if (!tardisEntity.isRemat() && !tardisEntity.isInFlight() && !tardisEntity.isDemat() && tardisEntity.getAlpha() >= 0.01f) {
-                                            int yaw = (int) tardisEntity.getYRot();
-                                            Vec3 exitPosition;
+                                        pPlayer.displayClientMessage(Component.literal("This TARDIS is not yours.").withStyle(ChatFormatting.RED), true);
+                                    }
+                                } else {
+                                    if (!tardisEntity.isRemat() && !tardisEntity.isInFlight() && !tardisEntity.isDemat() && tardisEntity.getAlpha() >= 0.01f) {
+                                        int yaw = (int) tardisEntity.getYRot();
+                                        Vec3 exitPosition;
 
-                                            double distance = 1.4; // Distance from the root position
+                                        double distance = 1.4; // Distance from the root position
 
-                                            double yawRadians = Math.toRadians(yaw);
+                                        double yawRadians = Math.toRadians(yaw);
 
-                                            double newX = blockExitPos.getX() + distance * Math.sin(yawRadians);
-                                            double newZ = blockExitPos.getZ() - distance * Math.cos(yawRadians);
+                                        double newX = blockExitPos.getX() + distance * Math.sin(yawRadians);
+                                        double newZ = blockExitPos.getZ() - distance * Math.cos(yawRadians);
 
-                                            exitPosition = new Vec3(newX, blockExitPos.getY(), newZ);
+                                        exitPosition = new Vec3(newX, blockExitPos.getY(), newZ);
 
-                                            if (pPlayer.getVehicle() != null) {
-                                                Entity rootEntity = pPlayer.getRootVehicle();
-                                                rootEntity.setYRot(yaw + 180f);
-                                                rootEntity.changeDimension(new DimensionTransition(targetDimension, exitPosition, Vec3.ZERO, rootEntity.getYRot(), rootEntity.getXRot(), DimensionTransition.DO_NOTHING));
-                                            }
-                                            else {
-                                                pPlayer.setYRot(yaw + 180f);
-                                                pPlayer.changeDimension(new DimensionTransition(targetDimension, exitPosition, Vec3.ZERO, pPlayer.getYRot(), pPlayer.getXRot(), DimensionTransition.DO_NOTHING));
-                                            }
+                                        if (pPlayer.getVehicle() != null) {
+                                            Entity rootEntity = pPlayer.getRootVehicle();
+                                            rootEntity.setYRot(yaw + 180f);
+                                            rootEntity.changeDimension(new DimensionTransition(targetDimension, exitPosition, Vec3.ZERO, rootEntity.getYRot(), rootEntity.getXRot(), DimensionTransition.DO_NOTHING));
                                         }
                                         else {
-                                            pPlayer.displayClientMessage(Component.literal("You cannot exit while in flight.").withStyle(ChatFormatting.RED), true);
+                                            pPlayer.setYRot(yaw + 180f);
+                                            pPlayer.changeDimension(new DimensionTransition(targetDimension, exitPosition, Vec3.ZERO, pPlayer.getYRot(), pPlayer.getXRot(), DimensionTransition.DO_NOTHING));
                                         }
+                                    }
+                                    else {
+                                        pPlayer.displayClientMessage(Component.literal("You cannot exit while in flight.").withStyle(ChatFormatting.RED), true);
                                     }
                                 }
                                 return InteractionResult.CONSUME;
