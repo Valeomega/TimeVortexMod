@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 public class StringSelectionList extends ObjectSelectionList<StringSelectionList.Entry> {
     private final Consumer<String> onSelect;
     private String selectedValue = null;
+    private boolean suppressCallback = false;
 
     public StringSelectionList(Minecraft minecraft, int width, int height, int y, int itemHeight, Consumer<String> onSelect) {
         super(minecraft, width, height, y, itemHeight);
@@ -29,12 +30,14 @@ public class StringSelectionList extends ObjectSelectionList<StringSelectionList
         }
         // Re-select the previously selected value if still present
         if (selectedValue != null) {
+            suppressCallback = true;
             for (Entry entry : this.children()) {
                 if (entry.value.equals(selectedValue)) {
                     this.setSelected(entry);
                     break;
                 }
             }
+            suppressCallback = false;
         }
     }
 
@@ -48,12 +51,14 @@ public class StringSelectionList extends ObjectSelectionList<StringSelectionList
         }
         // Re-select the previously selected value if still present
         if (selectedValue != null) {
+            suppressCallback = true;
             for (Entry entry : this.children()) {
                 if (entry.value.equals(selectedValue)) {
                     this.setSelected(entry);
                     break;
                 }
             }
+            suppressCallback = false;
         }
     }
 
@@ -77,7 +82,7 @@ public class StringSelectionList extends ObjectSelectionList<StringSelectionList
         super.setSelected(entry);
         if (entry != null) {
             this.selectedValue = entry.value;
-            if (onSelect != null) {
+            if (onSelect != null && !suppressCallback) {
                 onSelect.accept(entry.value);
             }
         }

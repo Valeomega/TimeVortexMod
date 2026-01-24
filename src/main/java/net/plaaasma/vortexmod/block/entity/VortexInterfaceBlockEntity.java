@@ -801,7 +801,11 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             if (throttle_on == 0 && proto) {
                 this.data.set(1, this.data.get(0));
             }
+            int prevIsFlying = this.data.get(19);
             this.data.set(19, throttle_on);
+            if (prevIsFlying != throttle_on) {
+                VortexMod.LOGGER.info("[TARDIS] is_flying state changed: {} -> {} at pos {} (proto={})", prevIsFlying, throttle_on, pPos, proto);
+            }
 
             BlockPos temp_target = new BlockPos(targetX, targetY, targetZ);
 
@@ -937,6 +941,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
             if (proto) { // Proto TARDIS Logic
                 BlockPos exteriorPos = new BlockPos(this.data.get(6), this.data.get(7), this.data.get(8));
                 BlockPos realTargetPos = new BlockPos(targetX, targetY, targetZ);
+                VortexMod.LOGGER.info("[TARDIS-PROTO] tick={}, last_tick={}, throttle_on={}, pLevel={}, exteriorPos={}, targetPos={}", 
+                    this.data.get(0), this.data.get(1), throttle_on, pLevel.dimension().location(), exteriorPos, realTargetPos);
 
                 double dematSeconds = 10;
                 double minFlightSeconds = 15;
@@ -975,6 +981,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                 this.data.set(20, remTime);
 
                 if (throttle_on == 1) {
+                    VortexMod.LOGGER.info("[TARDIS-PROTO] Throttle ON - ticks={}, last_tick={}, dematThreshold={}, tickSpeed={}, isVortex={}",
+                        this.data.get(0), this.data.get(1), (dematSeconds * tickSpeed), tickSpeed, pLevel == vortexDimension);
                     this.energy.removeEnergy(1);
                     if (monitorBlockEntity != null) {
                         monitorBlockEntity.data.set(5, remTime);
@@ -982,6 +990,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
 
                     this.data.set(21, 15);
                     if (this.data.get(0) > this.data.get(1) + (dematSeconds * tickSpeed) && pLevel != vortexDimension) {
+                        VortexMod.LOGGER.info("[TARDIS-PROTO] DEMAT THRESHOLD REACHED - teleporting to vortex dimension");
                         BlockPos vortexTargetPos = findNewVortexPosition(pPos, realTargetPos);
                         vortexTargetPos = new BlockPos(vortexTargetPos.getX(), -100, vortexTargetPos.getZ());
                         // if (Math.sqrt(exteriorPos.distToCenterSqr(targetX, pPos.getY(), targetZ)) <=
@@ -999,6 +1008,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                         } catch (Exception e) {
                             VortexMod.LOGGER.warn("Failed to force chunk: {}", e.getMessage());
                         }
+                        VortexMod.LOGGER.info("[TARDIS-PROTO] Calling handleVortexTeleports: size={}, from={}, to={}", size, pPos, vortexTargetPos);
                         handleVortexTeleports(size, overrideAABB, pLevel, pPos, vortexTargetPos);
                         chunkPos = currentDimension.getChunkAt(pPos).getPos();
                         try {
@@ -1012,6 +1022,8 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     } else if (pLevel == vortexDimension
                             && Math.sqrt(pPos.distToCenterSqr(targetX, pPos.getY(), targetZ)) <= 250
                             && this.data.get(0) >= (tickSpeed * minFlightSeconds) + this.data.get(1)) {
+                        VortexMod.LOGGER.info("[TARDIS-PROTO] LANDING CONDITION MET - distance={}, minFlightTicks={}", 
+                            Math.sqrt(pPos.distToCenterSqr(targetX, pPos.getY(), targetZ)), (tickSpeed * minFlightSeconds));
                         BlockPos flight_target = new BlockPos(targetX, targetY, targetZ);
                         this.data.set(1, this.data.get(0));
                         this.data.set(11, 0);
@@ -1037,6 +1049,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     }
                     if (pLevel != vortexDimension) {
                         if (this.data.get(0) == this.data.get(1) + 1) {
+                            VortexMod.LOGGER.info("[TARDIS-PROTO] Playing DEMAT sound at tick={}", this.data.get(0));
                             pLevel.playSeededSound(null, pPos.getX(), pPos.getY(), pPos.getZ(),
                                     ModSounds.DEMAT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
                         }
@@ -1118,6 +1131,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                     this.data.set(8, tardisEntity.getBlockZ());
                     if (throttle_on == 0) {
                         if (tardisEntity.isDemat()) {
+                            VortexMod.LOGGER.info("Interface: TARDIS {} is dematerializing but throttle is off. Resetting.", tardisEntity.getUUID());
                             tardisEntity.setDemat(false);
                             tardisEntity.setAlpha(1);
                             tardisEntity.setAnimDescending(false);
@@ -1126,6 +1140,10 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                         if (monitorBlockEntity != null) {
                             monitorBlockEntity.data.set(5, 0);
                         }
+                    } else {
+                         if (this.ticks % 20 == 0) {
+                             VortexMod.LOGGER.info("Interface: Throttle ON. Entity found: {}", tardisEntity.getUUID());
+                         }
                     }
 
                     int rotation_yaw = this.data.get(12);
@@ -1220,6 +1238,10 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                             }
 
                             tardisEntity.setNoGravity(true);
+                            if (this.ticks % 40 == 0) {
+                                VortexMod.LOGGER.info("Interface: TARDIS {} in flight. Time: {}/{}. Ticks to travel: {}", 
+                                    tardisEntity.getUUID(), this.data.get(0), this.data.get(1) + ticks_to_travel, ticks_to_travel);
+                            }
 
                             ChunkPos chunkPos = currentDimension.getChunkAt(exteriorPos).getPos();
                             try {
@@ -1270,6 +1292,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                             if (!tardisEntity.isRemat()) {
                                 this.data.set(1, this.data.get(0));
                                 tardisEntity.setDemat(true);
+                                VortexMod.LOGGER.info("Interface: Triggering Dematerialization for {}", tardisEntity.getUUID());
                                 currentDimension.playSeededSound(null, exteriorPos.getX(), exteriorPos.getY(),
                                         exteriorPos.getZ(), ModSounds.DEMAT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
                                 pLevel.playSeededSound(null, pPos.getX(), pPos.getY(), pPos.getZ(),
@@ -1349,6 +1372,7 @@ public class VortexInterfaceBlockEntity extends BlockEntity {
                                 this.data.set(11, 1);
 
                                 tardisEntity.setRemat(true);
+                                VortexMod.LOGGER.info("Interface: Triggering Rematerialization for {}", tardisEntity.getUUID());
 
                                 targetDimension.playSeededSound(null, targetX, targetY, targetZ,
                                         ModSounds.REMAT_SOUND.get(), SoundSource.BLOCKS, 1f, 1f, 0);
