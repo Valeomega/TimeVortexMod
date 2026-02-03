@@ -194,9 +194,11 @@ public class KeypadScreen extends AbstractContainerScreen<KeypadMenu> {
 
     private void onLocationSelected(String location) {
         // Parse the location string to extract just the name
-        int colonIdx = location.indexOf(':');
-        if (colonIdx > 0) {
-            this.nameField.setValue(location.substring(0, colonIdx).trim());
+        int bracketIdx = location.indexOf('(');
+        if (bracketIdx > 0) {
+            this.nameField.setValue(location.substring(0, bracketIdx).trim());
+        } else {
+            this.nameField.setValue(location);
         }
     }
 
@@ -217,7 +219,7 @@ public class KeypadScreen extends AbstractContainerScreen<KeypadMenu> {
                 String pointName = coordKey.substring(playerName.length());
                 BlockPos pointPos = this.menu.blockEntity.coordData.get(coordKey);
                 String pointDimension = this.menu.blockEntity.dimData.get(coordKey);
-                String locString = pointName + ": " + pointPos.getX() + " " + pointPos.getY() + " " + pointPos.getZ() + " | " + pointDimension;
+                String locString = pointName + " (" + pointPos.getX() + " " + pointPos.getY() + " " + pointPos.getZ() + ") | " + pointDimension;
                 
                 if (filter.isEmpty() || locString.toLowerCase().contains(filter.toLowerCase())) {
                     locationStrings.add(locString);

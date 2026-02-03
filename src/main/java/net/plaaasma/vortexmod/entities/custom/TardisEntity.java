@@ -439,101 +439,63 @@ public class TardisEntity extends Mob {
     @Override
     public void tick() {
         if (this.level() instanceof ServerLevel serverLevel) {
-            // Demat: ~20 seconds to match demat_sound.ogg (20.06s) - was ~45s, needs 2.25x faster
-            // Remat: ~24 seconds to match remat_sound.ogg (24.01s) - was ~17s, needs ~1.4x slower
-            // At 20 ticks/second with oscillation stages, calibrated for sound sync
-            float demat_increment = 0.055f;  // faster: 45s→20s
-            float remat_increment = 0.018f;  // slower: 17s→24s
+            // Demat: 20 seconds (400 ticks) to match demat_sound.ogg
+            // Remat: 24 seconds (480 ticks) to match remat_sound.ogg
+            int DEMAT_TICKS = 400;
+            int REMAT_TICKS = 480;
+
             if (this.entityData.get(DATA_DEMAT_ID)) {
-                // Cache values to reduce entityData calls (efficiency improvement)
-                float alpha = this.entityData.get(DATA_ALPHA_ID);
-                int stage = this.entityData.get(DATA_ANIM_STAGE_ID);
-                boolean descending = this.entityData.get(DATA_ANIM_DESCENDING_ID);
+                int currentTicks = this.entityData.get(DATA_ANIM_STAGE_ID);
+                currentTicks++;
+                this.entityData.set(DATA_ANIM_STAGE_ID, currentTicks);
+
+                float progress = (float) currentTicks / DEMAT_TICKS;
                 
-                if (this.tickCount % 20 == 0) {
-                   VortexMod.LOGGER.info("TARDIS {} Demat Tick: Alpha={}, Stage={}, Descending={}", 
-                       this.getUUID(), alpha, stage, descending);
+                // Linear fade out with slight oscillation
+                float baseAlpha = 1.0f - progress;
+                float oscillation = (float) Math.sin(progress * Math.PI * 10) * 0.1f * (1 - progress);
+                float alpha = Math.max(0f, Math.min(1f, baseAlpha + oscillation));
+                
+                this.entityData.set(DATA_ALPHA_ID, alpha);
+
+                if (currentTicks % 20 == 0) {
+                   VortexMod.LOGGER.info("TARDIS {} Demat Tick: {}/{} (Alpha={})", 
+                       this.getUUID(), currentTicks, DEMAT_TICKS, alpha);
                 }
                 
-                // Oscillation thresholds that converge to 0
-                float lowerThreshold = 0.4f - (stage / 10f); // 0.4, 0.3, 0.2, 0.1, 0.0...
-                float upperThreshold = 1f - (stage / 10f);   // 1.0, 0.9, 0.8, 0.7...
-                
-                if (descending) {
-                    if (alpha >= lowerThreshold) {
-                        alpha -= demat_increment;
-                        this.entityData.set(DATA_ALPHA_ID, alpha);
-                    } else {
-                        this.entityData.set(DATA_ANIM_DESCENDING_ID, false);
-                    }
-                } else {
-                    if (alpha <= upperThreshold) {
-                        alpha += demat_increment;
-                        this.entityData.set(DATA_ALPHA_ID, alpha);
-                    } else {
-                        stage++;
-                        this.entityData.set(DATA_ANIM_STAGE_ID, stage);
-                        this.entityData.set(DATA_ANIM_DESCENDING_ID, true);
-                    }
-                }
-                
-                // Completion check: alpha reaches 0
-                if (alpha <= 0) {
+                // Completion check
+                if (currentTicks >= DEMAT_TICKS) {
                     VortexMod.LOGGER.info("TARDIS {} Demat Complete. Entering Flight.", this.getUUID());
                     this.entityData.set(DATA_ALPHA_ID, 0f);
                     this.entityData.set(DATA_DEMAT_ID, false);
                     this.entityData.set(DATA_IN_FLIGHT_ID, true);
-                    this.entityData.set(DATA_ANIM_DESCENDING_ID, false);
                     this.entityData.set(DATA_ANIM_STAGE_ID, 0);
                 }
             }
             if (this.entityData.get(DATA_REMAT_ID)) {
-                // Rematerialization: alpha goes from 0 → 1 with oscillating fade-in
-                // Mirrors the demat pattern but in reverse (uses same increment speed)
+                int currentTicks = this.entityData.get(DATA_ANIM_STAGE_ID);
+                currentTicks++;
+                this.entityData.set(DATA_ANIM_STAGE_ID, currentTicks);
+
+                float progress = (float) currentTicks / REMAT_TICKS;
+
+                // Fade in with oscillation (reverse of demat style)
+                float baseAlpha = progress;
+                float oscillation = (float) Math.sin(progress * Math.PI * 10) * 0.1f * progress;
+                float alpha = Math.max(0f, Math.min(1f, baseAlpha + oscillation));
+
+                this.entityData.set(DATA_ALPHA_ID, alpha);
                 
-                // Cache values to reduce entityData calls (efficiency improvement)
-                float alpha = this.entityData.get(DATA_ALPHA_ID);
-                int stage = this.entityData.get(DATA_ANIM_STAGE_ID);
-                boolean descending = this.entityData.get(DATA_ANIM_DESCENDING_ID);
-                
-                if (this.tickCount % 20 == 0) {
-                    VortexMod.LOGGER.info("TARDIS {} Remat Tick: Alpha={}, Stage={}, Descending={}", 
-                        this.getUUID(), alpha, stage, descending);
+                if (currentTicks % 20 == 0) {
+                    VortexMod.LOGGER.info("TARDIS {} Remat Tick: {}/{} (Alpha={})", 
+                        this.getUUID(), currentTicks, REMAT_TICKS, alpha);
                 }
                 
-                // Oscillation pattern: ascend to upper threshold, descend to lower threshold
-                // Each stage raises the lower threshold, converging to 1.0
-                float lowerThreshold = 0.6f + (stage / 10f); // 0.6, 0.7, 0.8, 0.9...
-                float upperThreshold = 1.0f; // Always target 1.0
-                
-                if (descending) {
-                    // Descending phase: alpha decreases until it hits lower threshold
-                    if (alpha >= lowerThreshold) {
-                        alpha -= remat_increment;
-                        this.entityData.set(DATA_ALPHA_ID, alpha);
-                    } else {
-                        // Switch to ascending
-                        this.entityData.set(DATA_ANIM_DESCENDING_ID, false);
-                    }
-                } else {
-                    // Ascending phase: alpha increases toward upper threshold
-                    if (alpha < upperThreshold) {
-                        alpha += remat_increment;
-                        this.entityData.set(DATA_ALPHA_ID, alpha);
-                    } else {
-                        // Reached upper threshold - increment stage and switch to descending
-                        stage++;
-                        this.entityData.set(DATA_ANIM_STAGE_ID, stage);
-                        this.entityData.set(DATA_ANIM_DESCENDING_ID, true);
-                    }
-                }
-                
-                // Completion check: when lower threshold >= 1.0, we're done (stage >= 4)
-                if (alpha >= 1.0f || stage >= 4) {
+                // Completion check
+                if (currentTicks >= REMAT_TICKS) {
                     VortexMod.LOGGER.info("TARDIS {} Remat Complete.", this.getUUID());
                     this.entityData.set(DATA_ALPHA_ID, 1f);
                     this.entityData.set(DATA_REMAT_ID, false);
-                    this.entityData.set(DATA_ANIM_DESCENDING_ID, false);
                     this.entityData.set(DATA_ANIM_STAGE_ID, 0);
                 }
             }

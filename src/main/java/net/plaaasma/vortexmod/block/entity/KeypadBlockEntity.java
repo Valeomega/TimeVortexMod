@@ -74,6 +74,17 @@ public class KeypadBlockEntity extends BlockEntity implements MenuProvider {
         CompoundTag vortexModData = pTag.getCompound(VortexMod.MODID);
 
         this.is_active = vortexModData.getInt("active");
+
+        if (vortexModData.contains("locations")) {
+            CompoundTag locationsTag = vortexModData.getCompound("locations");
+            for (String key : locationsTag.getAllKeys()) {
+                CompoundTag locTag = locationsTag.getCompound(key);
+                BlockPos pos = new BlockPos(locTag.getInt("x"), locTag.getInt("y"), locTag.getInt("z"));
+                String dim = locTag.getString("dim");
+                this.coordData.put(key, pos);
+                this.dimData.put(key, dim);
+            }
+        }
     }
 
     @Override
@@ -83,6 +94,18 @@ public class KeypadBlockEntity extends BlockEntity implements MenuProvider {
         CompoundTag vortexModData = new CompoundTag();
 
         vortexModData.putInt("active", this.is_active);
+
+        CompoundTag locationsTag = new CompoundTag();
+        for (String key : this.coordData.keySet()) {
+            CompoundTag locTag = new CompoundTag();
+            BlockPos pos = this.coordData.get(key);
+            locTag.putInt("x", pos.getX());
+            locTag.putInt("y", pos.getY());
+            locTag.putInt("z", pos.getZ());
+            locTag.putString("dim", this.dimData.get(key));
+            locationsTag.put(key, locTag);
+        }
+        vortexModData.put("locations", locationsTag);
 
         pTag.put(VortexMod.MODID, vortexModData);
     }
