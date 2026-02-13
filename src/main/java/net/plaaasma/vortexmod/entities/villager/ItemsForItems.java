@@ -5,7 +5,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.VillagerTrades;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.trading.ItemCost;
 import net.minecraft.world.item.trading.MerchantOffer;
+
+import java.util.Optional;
 
 public class ItemsForItems implements VillagerTrades.ItemListing {
     private final Item item;
@@ -57,9 +60,8 @@ public class ItemsForItems implements VillagerTrades.ItemListing {
     }
 
     public MerchantOffer getOffer(Entity pTrader, RandomSource pRandom) {
-        if (costItem2 == null) {
-            return new MerchantOffer(new ItemStack(costItem, cost), new ItemStack(this.item, this.f_35736_), this.maxUses, this.villagerXp, this.priceMultiplier);
-        }
-        return new MerchantOffer(new ItemStack(costItem, cost), new ItemStack(costItem2, cost2), new ItemStack(this.item, this.f_35736_), this.maxUses, this.villagerXp, this.priceMultiplier);
+        ItemCost costA = new ItemCost(costItem, cost);
+        Optional<ItemCost> costB = costItem2 == null ? Optional.empty() : Optional.of(new ItemCost(costItem2, cost2));
+        return new MerchantOffer(costA, costB, new ItemStack(this.item, this.f_35736_), this.maxUses, this.villagerXp, this.priceMultiplier);
     }
 }

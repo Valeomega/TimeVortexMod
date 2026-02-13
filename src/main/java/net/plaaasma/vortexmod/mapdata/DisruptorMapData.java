@@ -1,5 +1,6 @@
 package net.plaaasma.vortexmod.mapdata;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -13,7 +14,7 @@ public class DisruptorMapData extends SavedData {
     private final HashMap<String, Integer> dataMap = new HashMap<>();
 
     @Override
-    public CompoundTag save(CompoundTag pCompoundTag) {
+    public CompoundTag save(CompoundTag pCompoundTag, HolderLookup.Provider provider) {
         CompoundTag dataTag = new CompoundTag();
 
         for (Map.Entry<String, Integer> entry : dataMap.entrySet()) {
@@ -28,7 +29,7 @@ public class DisruptorMapData extends SavedData {
         return dataMap;
     }
 
-    public static DisruptorMapData load(CompoundTag pCompoundTag) {
+    public static DisruptorMapData load(CompoundTag pCompoundTag, HolderLookup.Provider provider) {
         DisruptorMapData savedData = new DisruptorMapData();
         CompoundTag dataTag = pCompoundTag.getCompound(DATA_NAME);
         for (String key : dataTag.getAllKeys()) {
@@ -38,6 +39,6 @@ public class DisruptorMapData extends SavedData {
     }
 
     public static DisruptorMapData get(ServerLevel world) {
-        return world.getDataStorage().computeIfAbsent(DisruptorMapData::load, DisruptorMapData::new, DATA_NAME);
+        return world.getDataStorage().computeIfAbsent(new SavedData.Factory<>(DisruptorMapData::new, DisruptorMapData::load), DATA_NAME);
     }
 }

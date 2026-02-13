@@ -1,41 +1,36 @@
 package net.plaaasma.vortexmod.block.custom;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.AttachFace;
-import net.minecraft.world.level.gameevent.GameEventListener;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.event.ServerChatEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.network.NetworkHooks;
+import com.mojang.serialization.MapCodec;
 import net.plaaasma.vortexmod.block.entity.ModBlockEntities;
 import net.plaaasma.vortexmod.block.entity.KeypadBlockEntity;
-import net.plaaasma.vortexmod.block.entity.SizeManipulatorBlockEntity;
 import net.plaaasma.vortexmod.mapdata.DimensionMapData;
 import net.plaaasma.vortexmod.mapdata.LocationMapData;
 import net.plaaasma.vortexmod.network.ClientboundDimListPacket;
@@ -47,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class KeypadBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
+    public static final MapCodec<KeypadBlock> CODEC = BlockBehaviour.simpleCodec(KeypadBlock::new);
+
     protected static final VoxelShape NORTH_AABB = Block.box(0, 0, 12, 16, 16, 16);
     protected static final VoxelShape SOUTH_AABB = Block.box(0, 0, 0, 16, 16, 4);
     protected static final VoxelShape WEST_AABB = Block.box(12, 0, 0, 16, 16, 16);
@@ -59,6 +56,11 @@ public class KeypadBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
     public KeypadBlock(Properties pProperties) {
         super(pProperties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.EAST));
+    }
+
+    @Override
+    public MapCodec<KeypadBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -120,42 +122,67 @@ public class KeypadBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
     }
 
     @Override
-    public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
-        KeypadBlockEntity entity = (KeypadBlockEntity) pLevel.getBlockEntity(pPos);
-
-        if (!pLevel.isClientSide()) {
-            MinecraftServer minecraftserver = pLevel.getServer();
-            ServerLevel tardis_dim = minecraftserver.getLevel(ModDimensions.tardisDIM_LEVEL_KEY);
-            ServerLevel vortex = minecraftserver.getLevel(ModDimensions.vortexDIM_LEVEL_KEY);
-            LocationMapData coord_data = LocationMapData.get(vortex);
-            DimensionMapData dim_data = DimensionMapData.get(tardis_dim);
-
-            // Store list of levels in entity.Levels or something, use this to select in KeypadScreen
-            Iterable<ServerLevel> serverLevels = minecraftserver.getAllLevels();
-            for (ServerLevel serverLevel : serverLevels) {
-                entity.serverLevels.add(serverLevel.dimension().location().getPath());
-            }
-
-            Set<String> coordKeys = coord_data.getDataMap().keySet();
-            for (String coordKey : coordKeys) {
-                BlockPos pointPos = coord_data.getDataMap().get(coordKey);
-                entity.coordData.put(coordKey, pointPos);
-                String pointDimension = dim_data.getDataMap().get(coordKey);
-                entity.dimData.put(coordKey, pointDimension);
-            }
-
-            Map<String, String> levelMap = new HashMap<>();
-            for (String levelString : entity.serverLevels) {
-                levelMap.put(levelString, levelString);
-            }
-
-            PacketHandler.sendToAllClients(new ClientboundTargetMapPacket(pLevel.dimension().location().getPath(), pPos, entity.coordData, entity.dimData));
-            PacketHandler.sendToAllClients(new ClientboundDimListPacket(pLevel.dimension().location().getPath(), pPos, levelMap));
-
-            NetworkHooks.openScreen((ServerPlayer) pPlayer, entity, pPos);
+    protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHit) {
+        if (pLevel.isClientSide()) {
+            return InteractionResult.SUCCESS;
         }
 
-        return InteractionResult.SUCCESS;
+        if (!(pLevel instanceof ServerLevel serverLevel)) {
+            return InteractionResult.PASS;
+        }
+
+        BlockEntity blockEntity = pLevel.getBlockEntity(pPos);
+        if (!(blockEntity instanceof KeypadBlockEntity entity)) {
+            return InteractionResult.PASS;
+        }
+
+        MinecraftServer minecraftserver = serverLevel.getServer();
+        if (minecraftserver == null) {
+            return InteractionResult.PASS;
+        }
+
+        ServerLevel tardis_dim = minecraftserver.getLevel(ModDimensions.tardisDIM_LEVEL_KEY);
+        ServerLevel vortex = minecraftserver.getLevel(ModDimensions.vortexDIM_LEVEL_KEY);
+        
+        if (tardis_dim == null || vortex == null) {
+            return InteractionResult.PASS;
+        }
+
+        LocationMapData coord_data = LocationMapData.get(vortex);
+        DimensionMapData dim_data = DimensionMapData.get(tardis_dim);
+
+        // Clear previous data
+        entity.serverLevels.clear();
+        entity.coordData.clear();
+        entity.dimData.clear();
+
+        // Store list of levels in entity.Levels or something, use this to select in KeypadScreen
+        Iterable<ServerLevel> allServerLevels = minecraftserver.getAllLevels();
+        for (ServerLevel level : allServerLevels) {
+            entity.serverLevels.add(level.dimension().location().getPath());
+        }
+
+        Set<String> coordKeys = coord_data.getDataMap().keySet();
+        for (String coordKey : coordKeys) {
+            BlockPos pointPos = coord_data.getDataMap().get(coordKey);
+            entity.coordData.put(coordKey, pointPos);
+            String pointDimension = dim_data.getDataMap().get(coordKey);
+            entity.dimData.put(coordKey, pointDimension);
+        }
+
+        Map<String, String> levelMap = new HashMap<>();
+        for (String levelString : entity.serverLevels) {
+            levelMap.put(levelString, levelString);
+        }
+
+        PacketHandler.sendToAllClients(new ClientboundTargetMapPacket(pLevel.dimension().location().getPath(), pPos, entity.coordData, entity.dimData));
+        PacketHandler.sendToAllClients(new ClientboundDimListPacket(pLevel.dimension().location().getPath(), pPos, levelMap));
+
+        if (pPlayer instanceof ServerPlayer serverPlayer) {
+            serverPlayer.openMenu(entity, (RegistryFriendlyByteBuf buf) -> buf.writeBlockPos(pPos));
+        }
+        
+        return InteractionResult.CONSUME;
     }
 
     @Override
@@ -183,9 +210,9 @@ public class KeypadBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
     }
 
     @Override
-    public void appendHoverText(ItemStack pStack, @Nullable BlockGetter pLevel, List<Component> pTooltip, TooltipFlag pFlag) {
+    public void appendHoverText(ItemStack pStack, Item.TooltipContext pContext, List<Component> pTooltip, TooltipFlag pFlag) {
         pTooltip.add(Component.translatable("tooltip.vortexmod.keypad_block.tooltip"));
-        super.appendHoverText(pStack, pLevel, pTooltip, pFlag);
+        super.appendHoverText(pStack, pContext, pTooltip, pFlag);
     }
 
     @Override

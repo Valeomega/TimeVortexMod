@@ -4,21 +4,20 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.event.level.ChunkEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.server.command.ConfigCommand;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.server.command.ConfigCommand;
 import net.plaaasma.vortexmod.VortexMod;
 import net.plaaasma.vortexmod.block.custom.VortexInterfaceBlock;
 import net.plaaasma.vortexmod.commands.*;
 
-@Mod.EventBusSubscriber(modid = VortexMod.MODID)
+@EventBusSubscriber(modid = VortexMod.MODID)
 public class ModEvents {
 
     @SubscribeEvent
@@ -33,6 +32,7 @@ public class ModEvents {
         new SecurityCommand(event.getDispatcher());
         new ExteriorCommand(event.getDispatcher());
         new DisruptorCommand(event.getDispatcher());
+        new DeleteTardisCommand(event.getDispatcher());
 
         ConfigCommand.register(event.getDispatcher());
     }
@@ -70,7 +70,7 @@ public class ModEvents {
 
             if (blockEntity != null) {
                 ItemStack droppedItem = new ItemStack(pState.getBlock()); // Create an ItemStack of the block
-                blockEntity.saveToItem(droppedItem);
+                blockEntity.saveToItem(droppedItem, serverLevel.registryAccess());
 
                 // Spawn the ItemStack in the world
                 double x = pPos.getX() + 0.5;

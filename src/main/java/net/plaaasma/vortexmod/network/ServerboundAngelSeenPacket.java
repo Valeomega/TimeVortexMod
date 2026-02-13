@@ -1,53 +1,55 @@
 package net.plaaasma.vortexmod.network;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.network.NetworkEvent;
-import net.plaaasma.vortexmod.block.ModBlocks;
-import net.plaaasma.vortexmod.block.entity.CoordinateDesignatorBlockEntity;
-import net.plaaasma.vortexmod.block.entity.VortexInterfaceBlockEntity;
 import net.plaaasma.vortexmod.entities.custom.AngelEntity;
-import net.plaaasma.vortexmod.sound.ModSounds;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.plaaasma.vortexmod.VortexMod;
 
 import java.util.UUID;
-import java.util.function.Supplier;
 
-public class ServerboundAngelSeenPacket {
-    private final UUID angel_uuid;
-    private final String from_dimension;
+public record ServerboundAngelSeenPacket(UUID angelUuid, String fromDimension) implements CustomPacketPayload {
+    public static final Type<ServerboundAngelSeenPacket> TYPE =
+            new Type<>(ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "serverbound_angel_seen"));
 
-    public ServerboundAngelSeenPacket(UUID angel_uuid, String from_dimension) {
-        this.angel_uuid = angel_uuid;
-        this.from_dimension = from_dimension;
+    public static final StreamCodec<RegistryFriendlyByteBuf, ServerboundAngelSeenPacket> STREAM_CODEC =
+            StreamCodec.of(ServerboundAngelSeenPacket::encode, ServerboundAngelSeenPacket::decode);
+
+    public static ServerboundAngelSeenPacket decode(RegistryFriendlyByteBuf buffer) {
+        return new ServerboundAngelSeenPacket(buffer.readUUID(), buffer.readUtf());
     }
 
-    public ServerboundAngelSeenPacket(FriendlyByteBuf buffer) {
-        this(buffer.readUUID(), buffer.readUtf());
+    public static void encode(RegistryFriendlyByteBuf buffer, ServerboundAngelSeenPacket packet) {
+        buffer.writeUUID(packet.angelUuid);
+        buffer.writeUtf(packet.fromDimension);
     }
 
-    public void encode(FriendlyByteBuf buffer) {
-        buffer.writeUUID(this.angel_uuid);
-        buffer.writeUtf(this.from_dimension);
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    public void handle(Supplier<NetworkEvent.ServerCustomPayloadEvent.Context> context) {
-        NetworkEvent.Context realContext = context.get();
-        MinecraftServer minecraftServer = realContext.getSender().getServer();
-        ServerLevel level = null;
-        for (ServerLevel cLevel : minecraftServer.getAllLevels()) {
-            if (cLevel.dimension().location().getPath().equals(this.from_dimension)) {
-                level = cLevel;
+    public void handle(IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (!(context.player() instanceof net.minecraft.server.level.ServerPlayer sender)) return;
+            MinecraftServer minecraftServer = sender.getServer();
+            if (minecraftServer == null) return;
+
+            ServerLevel level = null;
+            for (ServerLevel cLevel : minecraftServer.getAllLevels()) {
+                if (cLevel.dimension().location().getPath().equals(this.fromDimension)) {
+                    level = cLevel;
+                    break;
+                }
             }
-        }
+            if (level == null) return;
 
-        AngelEntity angelEntity = (AngelEntity) level.getEntity(this.angel_uuid);
-
-        realContext.setPacketHandled(true);
+            AngelEntity angelEntity = (AngelEntity) level.getEntity(this.angelUuid);
+            // TODO: implement "angel seen" behavior (packet was previously a no-op).
+        });
     }
 }

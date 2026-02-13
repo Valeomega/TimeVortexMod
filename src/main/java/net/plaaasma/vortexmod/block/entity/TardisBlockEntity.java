@@ -1,6 +1,9 @@
 package net.plaaasma.vortexmod.block.entity;
 
+import java.util.UUID;
+
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.level.Level;
@@ -11,7 +14,7 @@ import net.plaaasma.vortexmod.VortexMod;
 public class TardisBlockEntity extends BlockEntity {
     public final ContainerData data;
 
-    public int owner = 0;
+    public UUID owner = null;
     public int locked = 0;
     public int bio_sec = 0;
 
@@ -21,7 +24,7 @@ public class TardisBlockEntity extends BlockEntity {
             @Override
             public int get(int pIndex) {
                 return switch (pIndex) {
-                    case 0 -> TardisBlockEntity.this.owner;
+                    case 0 -> 0; // Deprecated owner sync
                     case 1 -> TardisBlockEntity.this.locked;
                     case 2 -> TardisBlockEntity.this.bio_sec;
                     default -> 0;
@@ -31,7 +34,7 @@ public class TardisBlockEntity extends BlockEntity {
             @Override
             public void set(int pIndex, int pValue) {
                 switch (pIndex) {
-                    case 0 -> TardisBlockEntity.this.owner = pValue;
+                    case 0 -> { } // Deprecated owner sync
                     case 1 -> TardisBlockEntity.this.locked = pValue;
                     case 2 -> TardisBlockEntity.this.bio_sec = pValue;
                 }
@@ -50,28 +53,27 @@ public class TardisBlockEntity extends BlockEntity {
     }
 
     @Override
-    public void invalidateCaps() {
-        super.invalidateCaps();
-    }
-
-    @Override
-    public void load(CompoundTag pTag) {
-        super.load(pTag);
+    protected void loadAdditional(CompoundTag pTag, HolderLookup.Provider pRegistries) {
+        super.loadAdditional(pTag, pRegistries);
 
         CompoundTag vortexModData = pTag.getCompound(VortexMod.MODID);
 
-        this.owner = vortexModData.getInt("owner");
+        if (vortexModData.hasUUID("owner")) {
+            this.owner = vortexModData.getUUID("owner");
+        }
         this.locked = vortexModData.getInt("locked");
         this.bio_sec = vortexModData.getInt("bio_sec");
     }
 
     @Override
-    protected void saveAdditional(CompoundTag pTag) {
-        super.saveAdditional(pTag);
+    protected void saveAdditional(CompoundTag pTag, HolderLookup.Provider pRegistries) {
+        super.saveAdditional(pTag, pRegistries);
 
         CompoundTag vortexModData = new CompoundTag();
 
-        vortexModData.putInt("owner", this.owner);
+        if (this.owner != null) {
+            vortexModData.putUUID("owner", this.owner);
+        }
         vortexModData.putInt("locked", this.locked);
         vortexModData.putInt("bio_sec", this.bio_sec);
 

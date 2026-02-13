@@ -91,6 +91,6 @@ public class RiftRenderer extends MobRenderer<RiftEntity, RiftModel<RiftEntity>>
 
     @Override
     public ResourceLocation getTextureLocation(RiftEntity pEntity) {
-        return new ResourceLocation(VortexMod.MODID, "textures/entity/angel_texture.png");
+        return ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "textures/entity/angel_texture.png");
     }
 }

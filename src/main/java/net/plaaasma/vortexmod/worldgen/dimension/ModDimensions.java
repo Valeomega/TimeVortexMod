@@ -3,7 +3,7 @@ package net.plaaasma.vortexmod.worldgen.dimension;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.data.worldgen.BootstapContext;
+import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.data.worldgen.DimensionTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -17,7 +17,7 @@ import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.*;
-import net.minecraftforge.common.Tags;
+import net.neoforged.neoforge.common.Tags;
 import net.plaaasma.vortexmod.VortexMod;
 import net.plaaasma.vortexmod.worldgen.utils.ModNoiseGenerator;
 import net.plaaasma.vortexmod.worldgen.biome.ModBiomes;
@@ -28,27 +28,27 @@ import java.util.OptionalLong;
 public class ModDimensions {
     // Vortex DIM
     public static final ResourceKey<LevelStem> vortexDIM_KEY = ResourceKey.create(Registries.LEVEL_STEM,
-            new ResourceLocation(VortexMod.MODID, "vortexdim"));
+            ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "vortexdim"));
     public static final ResourceKey<Level> vortexDIM_LEVEL_KEY = ResourceKey.create(Registries.DIMENSION,
-            new ResourceLocation(VortexMod.MODID, "vortexdim"));
+            ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "vortexdim"));
     public static final ResourceKey<DimensionType> vortex_DIM_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE,
-            new ResourceLocation(VortexMod.MODID, "vortexdim_type"));
+            ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "vortexdim_type"));
     // Tardis DIM
     public static final ResourceKey<LevelStem> tardisDIM_KEY = ResourceKey.create(Registries.LEVEL_STEM,
-            new ResourceLocation(VortexMod.MODID, "tardisdim"));
+            ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "tardisdim"));
     public static final ResourceKey<Level> tardisDIM_LEVEL_KEY = ResourceKey.create(Registries.DIMENSION,
-            new ResourceLocation(VortexMod.MODID, "tardisdim"));
+            ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "tardisdim"));
     public static final ResourceKey<DimensionType> tardis_DIM_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE,
-            new ResourceLocation(VortexMod.MODID, "tardisdim_type"));
+            ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "tardisdim_type"));
     // Vortex DIM
     public static final ResourceKey<LevelStem> SKARO_DIM_KEY = ResourceKey.create(Registries.LEVEL_STEM,
-            new ResourceLocation(VortexMod.MODID, "skarodim"));
+            ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "skarodim"));
     public static final ResourceKey<Level> SKARO_DIM_LEVEL_KEY = ResourceKey.create(Registries.DIMENSION,
-            new ResourceLocation(VortexMod.MODID, "skarodim"));
+            ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "skarodim"));
     public static final ResourceKey<DimensionType> SKARO_DIM_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE,
-            new ResourceLocation(VortexMod.MODID, "skarodim_type"));
+            ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "skarodim_type"));
 
-    public static void bootstrapType(BootstapContext<DimensionType> context) {
+    public static void bootstrapType(BootstrapContext<DimensionType> context) {
         context.register(vortex_DIM_TYPE, new DimensionType(
                 OptionalLong.of(12000), // fixedTime
                 false, // hasSkylight
@@ -101,7 +101,7 @@ public class ModDimensions {
                 new DimensionType.MonsterSettings(false, false, ConstantInt.of(0), 0)));
     }
 
-    public static void bootstrapStem(BootstapContext<LevelStem> context) {
+    public static void bootstrapStem(BootstrapContext<LevelStem> context) {
         HolderGetter<Biome> biomeRegistry = context.lookup(Registries.BIOME);
         HolderGetter<DimensionType> dimTypes = context.lookup(Registries.DIMENSION_TYPE);
         HolderGetter<NoiseGeneratorSettings> noiseGenSettings = context.lookup(Registries.NOISE_SETTINGS);

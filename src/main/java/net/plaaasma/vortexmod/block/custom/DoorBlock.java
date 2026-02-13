@@ -7,15 +7,16 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -25,6 +26,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.plaaasma.vortexmod.block.ModBlocks;
@@ -34,11 +36,11 @@ import net.plaaasma.vortexmod.block.entity.VortexInterfaceBlockEntity;
 import net.plaaasma.vortexmod.entities.custom.TardisEntity;
 import net.plaaasma.vortexmod.item.ModItems;
 import net.plaaasma.vortexmod.worldgen.dimension.ModDimensions;
-import net.plaaasma.vortexmod.worldgen.portal.ModTeleporter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 import java.util.random.RandomGenerator;
 
 public class DoorBlock extends Block {
@@ -59,13 +61,25 @@ public class DoorBlock extends Block {
     }
 
     @Override
-    public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+    protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHit) {
+        return doUse(pState, pLevel, pPos, pPlayer, ItemStack.EMPTY, pHit);
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack pStack, BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+        InteractionResult result = doUse(pState, pLevel, pPos, pPlayer, pStack, pHit);
+        if (result.consumesAction()) {
+            return ItemInteractionResult.sidedSuccess(pLevel.isClientSide());
+        }
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    private InteractionResult doUse(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, ItemStack heldStack, BlockHitResult pHit) {
         if (pLevel instanceof ServerLevel serverLevel) {
             MinecraftServer minecraftserver = serverLevel.getServer();
             ServerLevel overworldDimension = minecraftserver.getLevel(Level.OVERWORLD);
             Iterable<ServerLevel> serverLevels = minecraftserver.getAllLevels();
             ServerLevel tardisDimension = minecraftserver.getLevel(ModDimensions.tardisDIM_LEVEL_KEY);
-            ItemStack heldStack = pPlayer.getItemInHand(pHand);
 
             if (serverLevel == tardisDimension) {
                 for (int x = -100; x <= 100; x++) {
@@ -83,48 +97,62 @@ public class DoorBlock extends Block {
                                 }
 
                                 BlockPos blockExitPos = new BlockPos(vortexInterfaceBlockEntity.data.get(6), vortexInterfaceBlockEntity.data.get(7), vortexInterfaceBlockEntity.data.get(8));
-                                TardisEntity tardisEntity = (TardisEntity) targetDimension.getEntity(vortexInterfaceBlockEntity.getExtUUID());
-                                if (tardisEntity != null) {
-                                    if (heldStack.is(ModItems.TARDIS_KEY.get())) {
-                                        int ownerCode = tardisEntity.getOwnerID();
-                                        if (ownerCode == pPlayer.getScoreboardName().hashCode()) {
-                                            if (!tardisEntity.isLocked()) {
-                                                tardisEntity.setLocked(true);
-                                                pPlayer.displayClientMessage(Component.literal("Locking TARDIS").withStyle(ChatFormatting.GREEN), true);
-                                            } else {
-                                                tardisEntity.setLocked(false);
-                                                pPlayer.displayClientMessage(Component.literal("Unlocking TARDIS").withStyle(ChatFormatting.AQUA), true);
-                                            }
+                                
+                                // Search all dimensions for the TARDIS entity
+                                TardisEntity tardisEntity = null;
+                                for (ServerLevel cLevel : serverLevels) {
+                                    TardisEntity foundEntity = (TardisEntity) cLevel.getEntity(vortexInterfaceBlockEntity.getExtUUID());
+                                    if (foundEntity != null) {
+                                        tardisEntity = foundEntity;
+                                        targetDimension = cLevel;
+                                        break;
+                                    }
+                                }
+                                
+                                if (tardisEntity == null) {
+                                    pPlayer.displayClientMessage(Component.literal("Cannot find TARDIS exterior. It may be respawning.").withStyle(ChatFormatting.RED), true);
+                                    return InteractionResult.CONSUME;
+                                }
+                                
+                                if (heldStack.is(ModItems.TARDIS_KEY.get())) {
+                                    UUID ownerCode = tardisEntity.getOwnerID();
+                                    if (ownerCode != null && ownerCode.equals(pPlayer.getUUID())) {
+                                        if (!tardisEntity.isLocked()) {
+                                            tardisEntity.setLocked(true);
+                                            pPlayer.displayClientMessage(Component.literal("Locking TARDIS").withStyle(ChatFormatting.GREEN), true);
                                         } else {
-                                            pPlayer.displayClientMessage(Component.literal("This TARDIS is not yours.").withStyle(ChatFormatting.RED), true);
+                                            tardisEntity.setLocked(false);
+                                            pPlayer.displayClientMessage(Component.literal("Unlocking TARDIS").withStyle(ChatFormatting.AQUA), true);
                                         }
                                     } else {
-                                        if (!tardisEntity.isRemat() && !tardisEntity.isInFlight() && !tardisEntity.isDemat() && tardisEntity.getAlpha() > 0) {
-                                            int yaw = (int) tardisEntity.getYRot();
-                                            Vec3 exitPosition;
+                                        pPlayer.displayClientMessage(Component.literal("This TARDIS is not yours.").withStyle(ChatFormatting.RED), true);
+                                    }
+                                } else {
+                                    if (!tardisEntity.isRemat() && !tardisEntity.isInFlight() && !tardisEntity.isDemat() && tardisEntity.getAlpha() >= 0.01f) {
+                                        int yaw = (int) tardisEntity.getYRot();
+                                        Vec3 exitPosition;
 
-                                            double distance = 1.4; // Distance from the root position
+                                        double distance = 1.4; // Distance from the root position
 
-                                            double yawRadians = Math.toRadians(yaw);
+                                        double yawRadians = Math.toRadians(yaw);
 
-                                            double newX = blockExitPos.getX() + distance * Math.sin(yawRadians);
-                                            double newZ = blockExitPos.getZ() - distance * Math.cos(yawRadians);
+                                        double newX = blockExitPos.getX() + distance * Math.sin(yawRadians);
+                                        double newZ = blockExitPos.getZ() - distance * Math.cos(yawRadians);
 
-                                            exitPosition = new Vec3(newX, blockExitPos.getY(), newZ);
+                                        exitPosition = new Vec3(newX, blockExitPos.getY(), newZ);
 
-                                            if (pPlayer.getVehicle() != null) {
-                                                Entity rootEntity = pPlayer.getRootVehicle();
-                                                rootEntity.setYRot(yaw + 180f);
-                                                rootEntity.changeDimension(targetDimension, new ModTeleporter(exitPosition));
-                                            }
-                                            else {
-                                                pPlayer.setYRot(yaw + 180f);
-                                                pPlayer.changeDimension(targetDimension, new ModTeleporter(exitPosition));
-                                            }
+                                        if (pPlayer.getVehicle() != null) {
+                                            Entity rootEntity = pPlayer.getRootVehicle();
+                                            rootEntity.setYRot(yaw + 180f);
+                                            rootEntity.changeDimension(new DimensionTransition(targetDimension, exitPosition, Vec3.ZERO, rootEntity.getYRot(), rootEntity.getXRot(), DimensionTransition.DO_NOTHING));
                                         }
                                         else {
-                                            pPlayer.displayClientMessage(Component.literal("You cannot exit while in flight.").withStyle(ChatFormatting.RED), true);
+                                            pPlayer.setYRot(yaw + 180f);
+                                            pPlayer.changeDimension(new DimensionTransition(targetDimension, exitPosition, Vec3.ZERO, pPlayer.getYRot(), pPlayer.getXRot(), DimensionTransition.DO_NOTHING));
                                         }
+                                    }
+                                    else {
+                                        pPlayer.displayClientMessage(Component.literal("You cannot exit while in flight.").withStyle(ChatFormatting.RED), true);
                                     }
                                 }
                                 return InteractionResult.CONSUME;
@@ -141,8 +169,8 @@ public class DoorBlock extends Block {
     }
 
     @Override
-    public void appendHoverText(ItemStack pStack, @Nullable BlockGetter pLevel, List<Component> pTooltip, TooltipFlag pFlag) {
+    public void appendHoverText(ItemStack pStack, Item.TooltipContext pContext, List<Component> pTooltip, TooltipFlag pFlag) {
         pTooltip.add(Component.translatable("tooltip.vortexmod.door_block.tooltip"));
-        super.appendHoverText(pStack, pLevel, pTooltip, pFlag);
+        super.appendHoverText(pStack, pContext, pTooltip, pFlag);
     }
 }

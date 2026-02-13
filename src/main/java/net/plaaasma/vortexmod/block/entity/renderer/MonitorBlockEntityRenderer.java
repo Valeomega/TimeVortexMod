@@ -61,30 +61,8 @@ public class MonitorBlockEntityRenderer implements BlockEntityRenderer<MonitorBl
         this.font.drawInBatch("|", 93, 67, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
         this.font.drawInBatch("|", 93, 76, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
 
-        // Target Page
+        // Exterior Page
         if (pBlockEntity.getBlockState().getValue(BlockStateProperties.POWERED)) {
-            this.font.drawInBatch("Target Info", 12.5f, 0, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
-            this.font.drawInBatch("----------------", -4.5f, 7.5f, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
-
-            this.font.drawInBatch("X", -22, 15, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
-            this.font.drawInBatch(Integer.toString(pBlockEntity.data.get(0)), 0, 15, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
-
-            this.font.drawInBatch("Y", -22, 27, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
-            this.font.drawInBatch(Integer.toString(pBlockEntity.data.get(1)), 0, 27, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
-
-            this.font.drawInBatch("Z", -22, 39, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
-            this.font.drawInBatch(Integer.toString(pBlockEntity.data.get(2)), 0, 39, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
-
-            this.font.drawInBatch("Dim", -26, 51, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
-            this.font.drawInBatch(pBlockEntity.target_dimension, 0, 51, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
-
-            this.font.drawInBatch("Rot", -27, 63, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
-            this.font.drawInBatch(Integer.toString(pBlockEntity.data.get(3)), 0, 63, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
-
-            this.font.drawInBatch("Est", -27, 75, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
-            this.font.drawInBatch(pBlockEntity.data.get(4) + " Sec | " + pBlockEntity.data.get(10) + " FE", 0, 75, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
-        }
-        else { // Exterior Page
             this.font.drawInBatch("Exterior Info", 10.5f, 0, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
             this.font.drawInBatch("----------------", -4.5f, 7.5f, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
 
@@ -105,6 +83,28 @@ public class MonitorBlockEntityRenderer implements BlockEntityRenderer<MonitorBl
 
             this.font.drawInBatch("NRG", -28, 75, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
             this.font.drawInBatch(pBlockEntity.data.get(11) + " FE", 0, 75, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
+        }
+        else { // Target Page
+            this.font.drawInBatch("Target Info", 12.5f, 0, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
+            this.font.drawInBatch("----------------", -4.5f, 7.5f, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
+
+            this.font.drawInBatch("X", -22, 15, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
+            this.font.drawInBatch(Integer.toString(pBlockEntity.data.get(0)), 0, 15, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
+
+            this.font.drawInBatch("Y", -22, 27, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
+            this.font.drawInBatch(Integer.toString(pBlockEntity.data.get(1)), 0, 27, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
+
+            this.font.drawInBatch("Z", -22, 39, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
+            this.font.drawInBatch(Integer.toString(pBlockEntity.data.get(2)), 0, 39, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
+
+            this.font.drawInBatch("Dim", -26, 51, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
+            this.font.drawInBatch(pBlockEntity.target_dimension, 0, 51, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
+
+            this.font.drawInBatch("Rot", -27, 63, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
+            this.font.drawInBatch(Integer.toString(pBlockEntity.data.get(3)), 0, 63, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
+
+            this.font.drawInBatch("Est", -27, 75, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
+            this.font.drawInBatch(pBlockEntity.data.get(4) + " Sec | " + pBlockEntity.data.get(10) + " FE", 0, 75, ChatFormatting.WHITE.getColor(), false, pPoseStack.last().pose(), pBuffer, Font.DisplayMode.POLYGON_OFFSET, 0, pPackedLight);
         }
 
         // Energy Bar

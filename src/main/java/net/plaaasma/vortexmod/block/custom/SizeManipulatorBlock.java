@@ -5,12 +5,16 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
+import com.mojang.serialization.MapCodec;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -22,6 +26,7 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.AABB;
@@ -31,7 +36,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.network.NetworkHooks;
 import net.plaaasma.vortexmod.block.ModBlocks;
 import net.plaaasma.vortexmod.block.entity.ModBlockEntities;
 import net.plaaasma.vortexmod.block.entity.SizeManipulatorBlockEntity;
@@ -43,9 +47,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class SizeManipulatorBlock extends HorizontalBaseEntityBlock {
+    public static final MapCodec<SizeManipulatorBlock> CODEC = BlockBehaviour.simpleCodec(SizeManipulatorBlock::new);
+
     public SizeManipulatorBlock(Properties pProperties) {
         super(pProperties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.EAST));
+    }
+
+    @Override
+    public MapCodec<SizeManipulatorBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -76,7 +87,20 @@ public class SizeManipulatorBlock extends HorizontalBaseEntityBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+    protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHit) {
+        return doUse(pState, pLevel, pPos, pPlayer, ItemStack.EMPTY, pHit);
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack pStack, BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+        InteractionResult result = doUse(pState, pLevel, pPos, pPlayer, pStack, pHit);
+        if (result.consumesAction()) {
+            return ItemInteractionResult.sidedSuccess(pLevel.isClientSide());
+        }
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    private InteractionResult doUse(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, ItemStack heldStack, BlockHitResult pHit) {
         if (!pLevel.isClientSide()) {
             SizeManipulatorBlockEntity localBlockEntity = (SizeManipulatorBlockEntity) pLevel.getBlockEntity(pPos);
             if (pPlayer.isCrouching()) {
@@ -149,7 +173,6 @@ public class SizeManipulatorBlock extends HorizontalBaseEntityBlock {
                     }
                 }
 
-                ItemStack heldStack = pPlayer.getItemInHand(pHand);
                 if (heldStack.is(ModItems.SIZE_DESIGNATOR.get())) {
                     SizeDesignator sizeDesignator = (SizeDesignator) heldStack.getItem();
                     if (sizeDesignator.alpha_pos != null && sizeDesignator.beta_pos != null) {
@@ -158,7 +181,7 @@ public class SizeManipulatorBlock extends HorizontalBaseEntityBlock {
                         int zLength = Math.abs(sizeDesignator.alpha_pos.getZ() - sizeDesignator.beta_pos.getZ());
                         int area = 2 * (xLength * yLength) + 2 * (yLength * zLength) + 2 * (xLength * zLength);
                         if (area < localBlockEntity.data.get(0) * 256) {
-                            AABB overrideAABB = new AABB(sizeDesignator.alpha_pos, sizeDesignator.beta_pos);
+                            AABB overrideAABB = new AABB(Vec3.atLowerCornerOf(sizeDesignator.alpha_pos), Vec3.atLowerCornerOf(sizeDesignator.beta_pos));
                             if (overrideAABB.contains(interfacePos.getX(), interfacePos.getY() + 0.5, interfacePos.getZ())) {
                                 localBlockEntity.setAlphaPos(sizeDesignator.alpha_pos.subtract(interfacePos));
                                 localBlockEntity.setBetaPos(sizeDesignator.beta_pos.subtract(interfacePos));
@@ -178,7 +201,9 @@ public class SizeManipulatorBlock extends HorizontalBaseEntityBlock {
                 } else {
                     BlockEntity entity = pLevel.getBlockEntity(pPos);
                     if (entity instanceof SizeManipulatorBlockEntity) {
-                        NetworkHooks.openScreen(((ServerPlayer) pPlayer), (SizeManipulatorBlockEntity) entity, pPos);
+                        if (pPlayer instanceof ServerPlayer serverPlayer) {
+                            serverPlayer.openMenu((SizeManipulatorBlockEntity) entity, (RegistryFriendlyByteBuf buf) -> buf.writeBlockPos(pPos));
+                        }
                     } else {
                         throw new IllegalStateException("Our container provider is missing!");
                     }
@@ -207,9 +232,9 @@ public class SizeManipulatorBlock extends HorizontalBaseEntityBlock {
     }
 
     @Override
-    public void appendHoverText(ItemStack pStack, @Nullable BlockGetter pLevel, List<Component> pTooltip, TooltipFlag pFlag) {
+    public void appendHoverText(ItemStack pStack, Item.TooltipContext pContext, List<Component> pTooltip, TooltipFlag pFlag) {
         pTooltip.add(Component.translatable("tooltip.vortexmod.size_manipulator_block.tooltip"));
-        super.appendHoverText(pStack, pLevel, pTooltip, pFlag);
+        super.appendHoverText(pStack, pContext, pTooltip, pFlag);
     }
 
     @Override

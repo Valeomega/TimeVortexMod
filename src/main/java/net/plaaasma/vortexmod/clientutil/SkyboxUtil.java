@@ -15,7 +15,7 @@ import org.joml.Matrix4f;
  * @author duzo
  */
 public class SkyboxUtil {
-    private static final ResourceLocation TARDIS_SKY = new ResourceLocation(VortexMod.MODID, "textures/environment/tardis_sky.png");
+    private static final ResourceLocation TARDIS_SKY = ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "textures/environment/tardis_sky.png");
 
     public static void renderTardisSky(PoseStack pPoseStack) {
         RenderSystem.enableBlend();
@@ -23,7 +23,6 @@ public class SkyboxUtil {
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         RenderSystem.setShaderTexture(0, TARDIS_SKY);
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder bufferbuilder = tesselator.getBuilder();
 
         for(int i = 0; i < 6; ++i) {
             pPoseStack.pushPose();
@@ -48,12 +47,12 @@ public class SkyboxUtil {
             }
 
             Matrix4f matrix4f = pPoseStack.last().pose();
-            bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-            bufferbuilder.vertex(matrix4f, -100.0F, -100.0F, -100.0F).uv(0.0F, 0.0F).color(40, 40, 40, 255).endVertex();
-            bufferbuilder.vertex(matrix4f, -100.0F, -100.0F, 100.0F).uv(0.0F, 16.0F).color(40, 40, 40, 255).endVertex();
-            bufferbuilder.vertex(matrix4f, 100.0F, -100.0F, 100.0F).uv(16.0F, 16.0F).color(40, 40, 40, 255).endVertex();
-            bufferbuilder.vertex(matrix4f, 100.0F, -100.0F, -100.0F).uv(16.0F, 0.0F).color(40, 40, 40, 255).endVertex();
-            tesselator.end();
+            BufferBuilder bufferbuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+            bufferbuilder.addVertex(matrix4f, -100.0F, -100.0F, -100.0F).setUv(0.0F, 0.0F).setColor(40, 40, 40, 255);
+            bufferbuilder.addVertex(matrix4f, -100.0F, -100.0F, 100.0F).setUv(0.0F, 16.0F).setColor(40, 40, 40, 255);
+            bufferbuilder.addVertex(matrix4f, 100.0F, -100.0F, 100.0F).setUv(16.0F, 16.0F).setColor(40, 40, 40, 255);
+            bufferbuilder.addVertex(matrix4f, 100.0F, -100.0F, -100.0F).setUv(16.0F, 0.0F).setColor(40, 40, 40, 255);
+            BufferUploader.drawWithShader(bufferbuilder.buildOrThrow());
             pPoseStack.popPose();
         }
 

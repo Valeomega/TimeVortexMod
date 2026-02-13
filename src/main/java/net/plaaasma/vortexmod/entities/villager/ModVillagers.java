@@ -1,18 +1,18 @@
 package net.plaaasma.vortexmod.entities.villager;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.npc.VillagerProfession;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 import net.plaaasma.vortexmod.VortexMod;
 
 public class ModVillagers {
     public static final DeferredRegister<PoiType> POI_TYPES =
-            DeferredRegister.create(ForgeRegistries.POI_TYPES, VortexMod.MODID);
+            DeferredRegister.create(Registries.POINT_OF_INTEREST_TYPE, VortexMod.MODID);
     public static final DeferredRegister<VillagerProfession> VILLAGER_PROFESSIONS =
-            DeferredRegister.create(ForgeRegistries.VILLAGER_PROFESSIONS, VortexMod.MODID);
+            DeferredRegister.create(Registries.VILLAGER_PROFESSION, VortexMod.MODID);
 
     /*public static final RegistryObject<VillagerProfession> SOUND_MASTER =
             VILLAGER_PROFESSIONS.register("soundmaster", () -> new VillagerProfession("soundmaster",

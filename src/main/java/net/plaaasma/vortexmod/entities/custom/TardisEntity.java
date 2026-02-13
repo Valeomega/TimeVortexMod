@@ -39,7 +39,8 @@ import net.minecraft.world.level.block.LightBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.Tags;
+import net.minecraft.world.level.portal.DimensionTransition;
+import net.neoforged.neoforge.common.Tags;
 import net.plaaasma.vortexmod.VortexMod;
 import net.plaaasma.vortexmod.block.ModBlocks;
 import net.plaaasma.vortexmod.entities.ModEntities;
@@ -47,7 +48,6 @@ import net.plaaasma.vortexmod.item.ModItems;
 import net.plaaasma.vortexmod.mapdata.LocationMapData;
 import net.plaaasma.vortexmod.mapdata.SecurityMapData;
 import net.plaaasma.vortexmod.worldgen.dimension.ModDimensions;
-import net.plaaasma.vortexmod.worldgen.portal.ModTeleporter;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -55,7 +55,7 @@ import javax.sound.midi.SysexMessage;
 import java.util.*;
 
 public class TardisEntity extends Mob {
-    private static final EntityDataAccessor<Integer> DATA_OWNERID_ID = SynchedEntityData.defineId(TardisEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Optional<UUID>> DATA_OWNER_UUID = SynchedEntityData.defineId(TardisEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Boolean> DATA_LOCKED_ID = SynchedEntityData.defineId(TardisEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_HAS_BIO_SECURITY_ID = SynchedEntityData.defineId(TardisEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_IN_FLIGHT_ID = SynchedEntityData.defineId(TardisEntity.class, EntityDataSerializers.BOOLEAN);
@@ -78,7 +78,9 @@ public class TardisEntity extends Mob {
     @Override
     public void addAdditionalSaveData(CompoundTag pCompound) {
         super.addAdditionalSaveData(pCompound);
-        pCompound.putInt("Owner", this.entityData.get(DATA_OWNERID_ID));
+        if (this.entityData.get(DATA_OWNER_UUID).isPresent()) {
+            pCompound.putUUID("OwnerUUID", this.entityData.get(DATA_OWNER_UUID).get());
+        }
         pCompound.putBoolean("Locked", this.entityData.get(DATA_LOCKED_ID));
         pCompound.putBoolean("HasBio", this.entityData.get(DATA_HAS_BIO_SECURITY_ID));
         pCompound.putBoolean("InFlight", this.entityData.get(DATA_IN_FLIGHT_ID));
@@ -98,7 +100,9 @@ public class TardisEntity extends Mob {
     @Override
     public void readAdditionalSaveData(CompoundTag pCompound) {
         super.readAdditionalSaveData(pCompound);
-        this.entityData.set(DATA_OWNERID_ID, pCompound.getInt("Owner"));
+        if (pCompound.hasUUID("OwnerUUID")) {
+            this.entityData.set(DATA_OWNER_UUID, Optional.of(pCompound.getUUID("OwnerUUID")));
+        }
         this.entityData.set(DATA_LOCKED_ID, pCompound.getBoolean("Locked"));
         this.entityData.set(DATA_HAS_BIO_SECURITY_ID, pCompound.getBoolean("HasBio"));
         this.entityData.set(DATA_IN_FLIGHT_ID, pCompound.getBoolean("InFlight"));
@@ -122,23 +126,23 @@ public class TardisEntity extends Mob {
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(DATA_OWNERID_ID, 0);
-        this.entityData.define(DATA_LOCKED_ID, false);
-        this.entityData.define(DATA_HAS_BIO_SECURITY_ID, false);
-        this.entityData.define(DATA_IN_FLIGHT_ID, false);
-        this.entityData.define(DATA_DEMAT_ID, false);
-        this.entityData.define(DATA_REMAT_ID, false);
-        this.entityData.define(DATA_ANIM_STAGE_ID, 0);
-        this.entityData.define(DATA_ANIM_DESCENDING_ID, false);
-        this.entityData.define(DATA_ALPHA_ID, 1f);
-        this.entityData.define(DATA_LEVEL_ID, "fartland");
-        this.entityData.define(DATA_TARGET_X_ID, 0f);
-        this.entityData.define(DATA_TARGET_Y_ID, 0f);
-        this.entityData.define(DATA_TARGET_Z_ID, 0f);
-        this.entityData.define(DATA_ROTATION_ID, 0);
-        this.entityData.define(DATA_SIGN_ID, "Police -=- Box");
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_OWNER_UUID, Optional.empty());
+        builder.define(DATA_LOCKED_ID, false);
+        builder.define(DATA_HAS_BIO_SECURITY_ID, false);
+        builder.define(DATA_IN_FLIGHT_ID, false);
+        builder.define(DATA_DEMAT_ID, false);
+        builder.define(DATA_REMAT_ID, false);
+        builder.define(DATA_ANIM_STAGE_ID, 0);
+        builder.define(DATA_ANIM_DESCENDING_ID, false);
+        builder.define(DATA_ALPHA_ID, 1f);
+        builder.define(DATA_LEVEL_ID, "fartland");
+        builder.define(DATA_TARGET_X_ID, 0f);
+        builder.define(DATA_TARGET_Y_ID, 0f);
+        builder.define(DATA_TARGET_Z_ID, 0f);
+        builder.define(DATA_ROTATION_ID, 0);
+        builder.define(DATA_SIGN_ID, "Police -=- Box");
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -150,8 +154,8 @@ public class TardisEntity extends Mob {
                 .add(Attributes.KNOCKBACK_RESISTANCE, Integer.MAX_VALUE);
     }
 
-    public void setOwnerID(int ownerID) {
-        this.entityData.set(DATA_OWNERID_ID, ownerID);
+    public void setOwnerID(UUID ownerID) {
+        this.entityData.set(DATA_OWNER_UUID, Optional.ofNullable(ownerID));
     }
 
     public void setLocked(boolean locked) {
@@ -167,6 +171,7 @@ public class TardisEntity extends Mob {
     }
 
     public void setDemat(boolean demat) {
+        VortexMod.LOGGER.info("[TARDIS-Entity] setDemat({}) called for UUID={}", demat, this.getUUID());
         this.entityData.set(DATA_DEMAT_ID, demat);
         if (this.entityData.get(DATA_DEMAT_ID)) {
             this.entityData.set(DATA_REMAT_ID, false);
@@ -174,6 +179,7 @@ public class TardisEntity extends Mob {
     }
 
     public void setRemat(boolean remat) {
+        VortexMod.LOGGER.info("[TARDIS-Entity] setRemat({}) called for UUID={}", remat, this.getUUID());
         this.entityData.set(DATA_REMAT_ID, remat);
         if (this.entityData.get(DATA_REMAT_ID)) {
             this.entityData.set(DATA_DEMAT_ID, false);
@@ -196,8 +202,8 @@ public class TardisEntity extends Mob {
         entityData.set(DATA_SIGN_ID, signText);
     }
 
-    public int getOwnerID() {
-        return this.entityData.get(DATA_OWNERID_ID);
+    public UUID getOwnerID() {
+        return this.entityData.get(DATA_OWNER_UUID).orElse(null);
     }
 
     public float getAlpha() {
@@ -287,11 +293,10 @@ public class TardisEntity extends Mob {
             ServerLevel overworld = minecraftserver.getLevel(Level.OVERWORLD);
             SecurityMapData security_data = SecurityMapData.get(overworld);
             LocationMapData data = LocationMapData.get(overworld);
-            int ownerCode = this.entityData.get(DATA_OWNERID_ID);
             ItemStack heldStack = pPlayer.getItemInHand(pHand);
 
             if (heldStack.is(ModItems.TARDIS_KEY.get())) {
-                if (ownerCode == pPlayer.getScoreboardName().hashCode()) {
+                if (this.entityData.get(DATA_OWNER_UUID).isPresent() && this.entityData.get(DATA_OWNER_UUID).get().equals(pPlayer.getUUID())) {
                     if (!this.entityData.get(DATA_LOCKED_ID)) {
                         this.entityData.set(DATA_LOCKED_ID, true);
                         pPlayer.displayClientMessage(Component.literal("Locking TARDIS").withStyle(ChatFormatting.GREEN), true);
@@ -321,12 +326,19 @@ public class TardisEntity extends Mob {
                                 }
                             }
 
-                            if (pPlayer.getScoreboardName().hashCode() == ownerCode || !hasBioSecurity || whitelistedCodes.contains(pPlayer.getScoreboardName()) || pPlayer.isSpectator()) {
+                            if ((this.entityData.get(DATA_OWNER_UUID).isPresent() && pPlayer.getUUID().equals(this.entityData.get(DATA_OWNER_UUID).get())) || !hasBioSecurity || whitelistedCodes.contains(pPlayer.getScoreboardName()) || pPlayer.isSpectator()) {
                                 BlockPos blockTardisTarget;
 
                                 if (!data.getDataMap().containsKey(this.getUUID().toString())) {
-                                    blockTardisTarget = data.getDataMap().get(Integer.toString(ownerCode));
-                                    data.getDataMap().put(this.getUUID().toString(), blockTardisTarget);
+                                    if (this.entityData.get(DATA_OWNER_UUID).isPresent()) {
+                                        blockTardisTarget = data.getDataMap().get(this.entityData.get(DATA_OWNER_UUID).get().toString());
+                                        if (blockTardisTarget == null) {
+                                            blockTardisTarget = this.blockPosition(); // Fallback
+                                        }
+                                        data.getDataMap().put(this.getUUID().toString(), blockTardisTarget);
+                                    } else {
+                                        blockTardisTarget = this.blockPosition();
+                                    }
                                 }
                                 else {
                                     blockTardisTarget = data.getDataMap().get(this.getUUID().toString());
@@ -388,11 +400,11 @@ public class TardisEntity extends Mob {
                                 if (pPlayer.getVehicle() != null) {
                                     Entity rootEntity = pPlayer.getRootVehicle();
                                     rootEntity.setYRot(playerRotation);
-                                    rootEntity.changeDimension(dimension, new ModTeleporter(tardisTarget));
+                                    rootEntity.changeDimension(new DimensionTransition(dimension, tardisTarget, Vec3.ZERO, rootEntity.getYRot(), rootEntity.getXRot(), DimensionTransition.DO_NOTHING));
                                 }
                                 else {
                                     pPlayer.setYRot(playerRotation);
-                                    pPlayer.changeDimension(dimension, new ModTeleporter(tardisTarget));
+                                    pPlayer.changeDimension(new DimensionTransition(dimension, tardisTarget, Vec3.ZERO, pPlayer.getYRot(), pPlayer.getXRot(), DimensionTransition.DO_NOTHING));
                                 }
                             } else {
                                 pPlayer.displayClientMessage(Component.literal("You are not whitelisted in this TARDIS").withStyle(ChatFormatting.RED), true);
@@ -427,64 +439,64 @@ public class TardisEntity extends Mob {
     @Override
     public void tick() {
         if (this.level() instanceof ServerLevel serverLevel) {
-            float increment = 0.025f;
-            float r_increment = 0.02f;
+            // Demat: 20 seconds (400 ticks) to match demat_sound.ogg
+            // Remat: 24 seconds (480 ticks) to match remat_sound.ogg
+            int DEMAT_TICKS = 400;
+            int REMAT_TICKS = 480;
+
             if (this.entityData.get(DATA_DEMAT_ID)) {
-                if (this.entityData.get(DATA_ANIM_DESCENDING_ID)) {
-                    if (this.entityData.get(DATA_ALPHA_ID) >= 0.4 - (this.entityData.get(DATA_ANIM_STAGE_ID) / 10f)) {
-                        this.entityData.set(DATA_ALPHA_ID, this.entityData.get(DATA_ALPHA_ID) - increment);
-                    }
-                    else {
-                        this.entityData.set(DATA_ANIM_DESCENDING_ID, false);
-                    }
+                int currentTicks = this.entityData.get(DATA_ANIM_STAGE_ID);
+                currentTicks++;
+                this.entityData.set(DATA_ANIM_STAGE_ID, currentTicks);
+
+                float progress = (float) currentTicks / DEMAT_TICKS;
+                
+                // Linear fade out with slight oscillation
+                float baseAlpha = 1.0f - progress;
+                float oscillation = (float) Math.sin(progress * Math.PI * 10) * 0.1f * (1 - progress);
+                float alpha = Math.max(0f, Math.min(1f, baseAlpha + oscillation));
+                
+                this.entityData.set(DATA_ALPHA_ID, alpha);
+
+                if (currentTicks % 20 == 0) {
+                   VortexMod.LOGGER.info("TARDIS {} Demat Tick: {}/{} (Alpha={})", 
+                       this.getUUID(), currentTicks, DEMAT_TICKS, alpha);
                 }
-                else {
-                    if (this.entityData.get(DATA_ALPHA_ID) <= 1f - (this.entityData.get(DATA_ANIM_STAGE_ID) / 10f)) {
-                        this.entityData.set(DATA_ALPHA_ID, this.entityData.get(DATA_ALPHA_ID) + increment);
-                    }
-                    else {
-                        this.entityData.set(DATA_ANIM_STAGE_ID, this.entityData.get(DATA_ANIM_STAGE_ID) + 1);
-                        this.entityData.set(DATA_ANIM_DESCENDING_ID, true);
-                    }
-                }
-                if (this.entityData.get(DATA_ALPHA_ID) <= 0) {
+                
+                // Completion check
+                if (currentTicks >= DEMAT_TICKS) {
+                    VortexMod.LOGGER.info("TARDIS {} Demat Complete. Entering Flight.", this.getUUID());
                     this.entityData.set(DATA_ALPHA_ID, 0f);
                     this.entityData.set(DATA_DEMAT_ID, false);
                     this.entityData.set(DATA_IN_FLIGHT_ID, true);
-                    this.entityData.set(DATA_ANIM_DESCENDING_ID, false);
                     this.entityData.set(DATA_ANIM_STAGE_ID, 0);
                 }
             }
             if (this.entityData.get(DATA_REMAT_ID)) {
-                MinecraftServer minecraftserver = serverLevel.getServer();
-                int tickSpeed = minecraftserver.getGameRules().getInt(GameRules.RULE_RANDOMTICKING);
-                tickSpeed *= 8;
+                int currentTicks = this.entityData.get(DATA_ANIM_STAGE_ID);
+                currentTicks++;
+                this.entityData.set(DATA_ANIM_STAGE_ID, currentTicks);
 
-                int tickDelay = (int) (tickSpeed * 4);
-                if (this.entityData.get(DATA_ANIM_STAGE_ID) < tickDelay) {
-                    this.entityData.set(DATA_ANIM_STAGE_ID, this.entityData.get(DATA_ANIM_STAGE_ID) + 1);
+                float progress = (float) currentTicks / REMAT_TICKS;
+
+                // Fade in with oscillation (reverse of demat style)
+                float baseAlpha = progress;
+                float oscillation = (float) Math.sin(progress * Math.PI * 10) * 0.1f * progress;
+                float alpha = Math.max(0f, Math.min(1f, baseAlpha + oscillation));
+
+                this.entityData.set(DATA_ALPHA_ID, alpha);
+                
+                if (currentTicks % 20 == 0) {
+                    VortexMod.LOGGER.info("TARDIS {} Remat Tick: {}/{} (Alpha={})", 
+                        this.getUUID(), currentTicks, REMAT_TICKS, alpha);
                 }
-                else {
-                    if (this.entityData.get(DATA_ANIM_DESCENDING_ID)) {
-                        if (this.entityData.get(DATA_ALPHA_ID) >= 0 + ((this.entityData.get(DATA_ANIM_STAGE_ID) - tickDelay) / 10f)) {
-                            this.entityData.set(DATA_ALPHA_ID, this.entityData.get(DATA_ALPHA_ID) - r_increment);
-                        } else {
-                            this.entityData.set(DATA_ANIM_DESCENDING_ID, false);
-                        }
-                    } else {
-                        if (this.entityData.get(DATA_ALPHA_ID) <= 0.5 + ((this.entityData.get(DATA_ANIM_STAGE_ID) - tickDelay) / 10f)) {
-                            this.entityData.set(DATA_ALPHA_ID, this.entityData.get(DATA_ALPHA_ID) + r_increment);
-                        } else {
-                            this.entityData.set(DATA_ANIM_STAGE_ID, this.entityData.get(DATA_ANIM_STAGE_ID) + 1);
-                            this.entityData.set(DATA_ANIM_DESCENDING_ID, true);
-                        }
-                    }
-                    if (this.entityData.get(DATA_ALPHA_ID) >= 1) {
-                        this.entityData.set(DATA_ALPHA_ID, 1f);
-                        this.entityData.set(DATA_REMAT_ID, false);
-                        this.entityData.set(DATA_ANIM_DESCENDING_ID, false);
-                        this.entityData.set(DATA_ANIM_STAGE_ID, 0);
-                    }
+                
+                // Completion check
+                if (currentTicks >= REMAT_TICKS) {
+                    VortexMod.LOGGER.info("TARDIS {} Remat Complete.", this.getUUID());
+                    this.entityData.set(DATA_ALPHA_ID, 1f);
+                    this.entityData.set(DATA_REMAT_ID, false);
+                    this.entityData.set(DATA_ANIM_STAGE_ID, 0);
                 }
             }
 
@@ -494,21 +506,15 @@ public class TardisEntity extends Mob {
             this.entityData.set(DATA_TARGET_Z_ID, (float) this.position().z);
             this.entityData.set(DATA_ROTATION_ID, (int) this.getYRot());
             if (this.getAlpha() >= 1) {
+                if (this.entityData.get(DATA_IN_FLIGHT_ID)) {
+                     VortexMod.LOGGER.info("TARDIS {} Forced Flight End (Alpha >= 1).", this.getUUID());
+                }
                 this.entityData.set(DATA_IN_FLIGHT_ID, false);
             }
         }
         else if (this.level() instanceof ClientLevel clientLevel) {
-            if (Minecraft.getInstance().isSingleplayer()) {
-                String targetDimension = this.entityData.get(DATA_LEVEL_ID);
-                Vec3 target = new Vec3(this.entityData.get(DATA_TARGET_X_ID), this.entityData.get(DATA_TARGET_Y_ID), this.entityData.get(DATA_TARGET_Z_ID));
-                int rotation_yaw = this.entityData.get(DATA_ROTATION_ID);
-
-                if ((!(this.position().x == target.x && this.position().y == target.y && this.position().z == target.z)) && !this.isFallFlying()) {
-                    if (this.level().dimension().toString().equals(targetDimension)) {
-                        this.moveTo(target.x, target.y, target.z, rotation_yaw, 0);
-                    }
-                }
-            }
+            // Client-side entity position is handled by vanilla entity tracking.
+            // Manual moveTo() calls caused issues with animation interpolation.
         }
 
         super.tick();

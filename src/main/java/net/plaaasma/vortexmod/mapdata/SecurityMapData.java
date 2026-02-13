@@ -1,5 +1,6 @@
 package net.plaaasma.vortexmod.mapdata;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -12,7 +13,7 @@ public class SecurityMapData extends SavedData {
     private final HashMap<String, String> dataMap = new HashMap<>();
 
     @Override
-    public CompoundTag save(CompoundTag pCompoundTag) {
+    public CompoundTag save(CompoundTag pCompoundTag, HolderLookup.Provider pProvider) {
         CompoundTag dataTag = new CompoundTag();
 
         for (Map.Entry<String, String> entry : dataMap.entrySet()) {
@@ -27,7 +28,7 @@ public class SecurityMapData extends SavedData {
         return dataMap;
     }
 
-    public static SecurityMapData load(CompoundTag pCompoundTag) {
+    public static SecurityMapData load(CompoundTag pCompoundTag, HolderLookup.Provider pProvider) {
         SecurityMapData savedData = new SecurityMapData();
         CompoundTag dataTag = pCompoundTag.getCompound(DATA_NAME);
         for (String key : dataTag.getAllKeys()) {
@@ -37,6 +38,6 @@ public class SecurityMapData extends SavedData {
     }
 
     public static SecurityMapData get(ServerLevel world) {
-        return world.getDataStorage().computeIfAbsent(SecurityMapData::load, SecurityMapData::new, DATA_NAME);
+        return world.getDataStorage().computeIfAbsent(new SavedData.Factory<>(SecurityMapData::new, SecurityMapData::load), DATA_NAME);
     }
 }

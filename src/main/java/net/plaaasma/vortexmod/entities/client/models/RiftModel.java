@@ -14,8 +14,10 @@ import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.world.entity.Entity;
 
 public class RiftModel<T extends Entity> extends HierarchicalModel<T> {
+	private final ModelPart root;
+
 	public RiftModel(ModelPart root) {
-		
+		this.root = root;
 	}
 
 	public static LayerDefinition createBodyLayer() {
@@ -33,12 +35,14 @@ public class RiftModel<T extends Entity> extends HierarchicalModel<T> {
 	}
 
 	@Override
-	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
-		
+	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color) {
+		if (this.root != null) {
+			this.root.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+		}
 	}
 
 	@Override
 	public ModelPart root() {
-		return null;
+		return this.root;
 	}
 }

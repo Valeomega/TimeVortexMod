@@ -1,19 +1,21 @@
 package net.plaaasma.vortexmod;
 
 import com.mojang.logging.LogUtils;
-import dan200.computercraft.impl.ComputerCraftAPIService;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.entity.EntityRenderers;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.world.chunk.ForcedChunkManager;
+import net.neoforged.neoforge.common.world.chunk.TicketController;
+import net.plaaasma.vortexmod.block.custom.VortexInterfaceBlock;
+import net.neoforged.neoforge.common.world.chunk.RegisterTicketControllersEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.plaaasma.vortexmod.block.ModBlocks;
 import net.plaaasma.vortexmod.block.entity.*;
 import net.plaaasma.vortexmod.entities.ModEntities;
@@ -28,53 +30,56 @@ import net.plaaasma.vortexmod.screen.custom.screen.ScannerScreen;
 import net.plaaasma.vortexmod.sound.ModSounds;
 import net.plaaasma.vortexmod.screen.ModMenuTypes;
 import net.plaaasma.vortexmod.screen.custom.screen.SizeManipulatorScreen;
-import org.slf4j.Logger;;
+import org.slf4j.Logger;
 
-// The value here should match an entry in the META-INF/mods.toml file
+// The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(VortexMod.MODID)
 public class VortexMod {
     // Define mod id in a common place for everything to reference
     public static final String MODID = "vortexmod";
 
     // Directly reference a slf4j logger
-    public static final Logger P_LOGGER = LogUtils.getLogger();
-    private static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = LogUtils.getLogger();
 
-    public VortexMod() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-
+    public VortexMod(IEventBus modEventBus) {
         ModCreativeModeTabs.register(modEventBus);
-
         ModItems.register(modEventBus);
-
         ModBlocks.register(modEventBus);
-
         ModBlockEntities.register(modEventBus);
-
         ModMenuTypes.register(modEventBus);
-
         ModEntities.register(modEventBus);
-
         ModSounds.register(modEventBus);
 
-        // Register the commonSetup method for modloading
-        modEventBus.addListener(this::commonSetup);
+        // TicketController is created statically in VortexInterfaceBlock
+        // It should be automatically registered when first used
+        LOGGER.info("Mod initialized - TicketController will be available when needed");
+
+        // Register worldgen data
+        // In NeoForge 1.21.1, worldgen data must be provided through datapacks
+        // The RegistrySetBuilder is used by datagen to generate the datapack files
+        // For now, we'll need to generate datapack files or use a different
+        // registration method
+
+        // Register TicketController on the Mod Event Bus
+        modEventBus.addListener(this::registerTicketControllers);
 
         // Register ourselves for server and other game events we are interested in
-        MinecraftForge.EVENT_BUS.register(this);
-    }
-
-    private void commonSetup(final FMLCommonSetupEvent event) {
+        NeoForge.EVENT_BUS.register(this);
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
-
+    public void registerTicketControllers(RegisterTicketControllersEvent event) {
+        event.register(VortexInterfaceBlock.getTicketController());
     }
 
-    // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
-    @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    @SubscribeEvent
+    public void onServerStarting(ServerStartingEvent event) {
+        // Server starting logic
+    }
+
+    // You can use EventBusSubscriber to automatically register all static methods
+    // in the class annotated with @SubscribeEvent
+    @EventBusSubscriber(modid = MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
@@ -96,9 +101,7 @@ public class VortexMod {
 
             EntityRenderers.register(ModEntities.TARDIS.get(), TardisRenderer::new);
 
-            MenuScreens.register(ModMenuTypes.SIZE_MANIPULATOR_MENU.get(), SizeManipulatorScreen::new);
-            MenuScreens.register(ModMenuTypes.KEYPAD_MENU.get(), KeypadScreen::new);
-            MenuScreens.register(ModMenuTypes.SCANNER_MENU.get(), ScannerScreen::new);
+            // Menu screen registration is handled in ModEventBusClientEvents.onClientSetup
         }
     }
 }

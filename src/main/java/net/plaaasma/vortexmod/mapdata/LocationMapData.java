@@ -1,6 +1,7 @@
 package net.plaaasma.vortexmod.mapdata;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.server.level.ServerLevel;
@@ -15,7 +16,7 @@ public class LocationMapData extends SavedData {
     private final HashMap<String, BlockPos> dataMap = new HashMap<>();
 
     @Override
-    public CompoundTag save(CompoundTag pCompoundTag) {
+    public CompoundTag save(CompoundTag pCompoundTag, HolderLookup.Provider provider) {
         CompoundTag dataTag = new CompoundTag();
 
         for (Map.Entry<String, BlockPos> entry : dataMap.entrySet()) {
@@ -30,16 +31,19 @@ public class LocationMapData extends SavedData {
         return dataMap;
     }
 
-    public static LocationMapData load(CompoundTag pCompoundTag) {
+    public static LocationMapData load(CompoundTag pCompoundTag, HolderLookup.Provider provider) {
         LocationMapData savedData = new LocationMapData();
         CompoundTag dataTag = pCompoundTag.getCompound(DATA_NAME);
         for (String key : dataTag.getAllKeys()) {
-            savedData.dataMap.put(key, NbtUtils.readBlockPos(dataTag.getCompound(key)));
+            BlockPos pos = NbtUtils.readBlockPos(dataTag, key).orElse(null);
+            if (pos != null) {
+                savedData.dataMap.put(key, pos);
+            }
         }
         return savedData;
     }
 
     public static LocationMapData get(ServerLevel world) {
-        return world.getDataStorage().computeIfAbsent(LocationMapData::load, LocationMapData::new, DATA_NAME);
+        return world.getDataStorage().computeIfAbsent(new SavedData.Factory<>(LocationMapData::new, LocationMapData::load), DATA_NAME);
     }
 }

@@ -1,10 +1,11 @@
 package net.plaaasma.vortexmod.block.custom;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.screens.inventory.CommandBlockEditScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -12,6 +13,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -21,6 +23,7 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.AttachFace;
@@ -28,7 +31,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.network.NetworkHooks;
 import net.plaaasma.vortexmod.block.ModBlocks;
 import net.plaaasma.vortexmod.block.entity.ModBlockEntities;
 import net.plaaasma.vortexmod.block.entity.ScannerBlockEntity;
@@ -36,13 +38,14 @@ import net.plaaasma.vortexmod.block.entity.VortexInterfaceBlockEntity;
 import net.plaaasma.vortexmod.entities.custom.TardisEntity;
 import net.plaaasma.vortexmod.sound.ModSounds;
 import net.plaaasma.vortexmod.worldgen.dimension.ModDimensions;
-import net.plaaasma.vortexmod.worldgen.portal.ModTeleporter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Random;
 
 public class ScannerBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
+    public static final MapCodec<ScannerBlock> CODEC = BlockBehaviour.simpleCodec(ScannerBlock::new);
+
     protected static final VoxelShape NORTH_AABB = Block.box(0, 0, 10, 16, 16, 16);
     protected static final VoxelShape SOUTH_AABB = Block.box(0, 0, 0, 16, 16, 6);
     protected static final VoxelShape WEST_AABB = Block.box(10, 0, 0, 16, 16, 16);
@@ -55,6 +58,11 @@ public class ScannerBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
     public ScannerBlock(Properties pProperties) {
         super(pProperties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.EAST));
+    }
+
+    @Override
+    public MapCodec<ScannerBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -121,7 +129,7 @@ public class ScannerBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
     }
 
     @Override
-    public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+    protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHit) {
         pLevel.playSeededSound(null, pPos.getX(), pPos.getY(), pPos.getZ(), ModSounds.SCANNER_SOUND.get(), SoundSource.BLOCKS, 1, 1, 0);
 
         if (pLevel instanceof ServerLevel serverLevel) {
@@ -236,7 +244,9 @@ public class ScannerBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
             sblockEntity.data.set(8, 1);
             System.out.println(sblockEntity.toString());
 
-            NetworkHooks.openScreen((ServerPlayer) pPlayer, sblockEntity, pPos);
+            if (pPlayer instanceof ServerPlayer serverPlayer) {
+                serverPlayer.openMenu(sblockEntity, (RegistryFriendlyByteBuf buf) -> buf.writeBlockPos(pPos));
+            }
         }
 
         return InteractionResult.SUCCESS;
@@ -267,9 +277,9 @@ public class ScannerBlock extends FaceAttachedHorizontalDirectionalBlockEntity {
     }
 
     @Override
-    public void appendHoverText(ItemStack pStack, @Nullable BlockGetter pLevel, List<Component> pTooltip, TooltipFlag pFlag) {
+    public void appendHoverText(ItemStack pStack, Item.TooltipContext pContext, List<Component> pTooltip, TooltipFlag pFlag) {
         pTooltip.add(Component.translatable("tooltip.vortexmod.scanner_block.tooltip"));
-        super.appendHoverText(pStack, pLevel, pTooltip, pFlag);
+        super.appendHoverText(pStack, pContext, pTooltip, pFlag);
     }
 
     @Override

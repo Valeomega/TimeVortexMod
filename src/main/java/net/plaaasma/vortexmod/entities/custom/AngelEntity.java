@@ -59,7 +59,6 @@ import net.plaaasma.vortexmod.mapdata.LocationMapData;
 import net.plaaasma.vortexmod.mapdata.SecurityMapData;
 import net.plaaasma.vortexmod.network.PacketHandler;
 import net.plaaasma.vortexmod.worldgen.dimension.ModDimensions;
-import net.plaaasma.vortexmod.worldgen.portal.ModTeleporter;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 
@@ -96,11 +95,11 @@ public class AngelEntity extends Monster {
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(DATA_CLOSE, false);
-        this.entityData.define(DATA_ROTATION_X, 0f);
-        this.entityData.define(DATA_ROTATION_Y, 0f);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_CLOSE, false);
+        builder.define(DATA_ROTATION_X, 0f);
+        builder.define(DATA_ROTATION_Y, 0f);
     }
 
     public double getDotProduct(ServerLevel serverLevel, Vec3 targetPosition, BlockPos targetBlockPosition) {
@@ -184,7 +183,7 @@ public class AngelEntity extends Monster {
 
     @Override
     public boolean hurt(DamageSource pSource, float pAmount) {
-        if (pSource.getEntity() instanceof LivingEntity && pSource.getEntity().level() instanceof ServerLevel && !pSource.isIndirect()) {
+        if (pSource.getEntity() instanceof LivingEntity && pSource.getEntity().level() instanceof ServerLevel && pSource.isDirect()) {
             doTeleport((LivingEntity) pSource.getEntity(), (ServerLevel) pSource.getEntity().level());
         }
         if (pSource != this.damageSources().genericKill() && pSource != this.damageSources().fellOutOfWorld()) {
@@ -243,7 +242,7 @@ public class AngelEntity extends Monster {
 
     @Override
     public void die(DamageSource pDamageSource) {
-        if (net.minecraftforge.common.ForgeHooks.onLivingDeath(this, pDamageSource)) return;
+        if (net.neoforged.neoforge.common.CommonHooks.onLivingDeath(this, pDamageSource)) return;
         if (!this.isRemoved() && !this.dead) {
             Entity entity = pDamageSource.getEntity();
             LivingEntity livingentity = this.getKillCredit();
@@ -256,7 +255,7 @@ public class AngelEntity extends Monster {
             }
 
             if (!this.level().isClientSide && this.hasCustomName()) {
-                VortexMod.P_LOGGER.info("Named entity {} died: {}", this, this.getCombatTracker().getDeathMessage().getString());
+                VortexMod.LOGGER.info("Named entity {} died: {}", this, this.getCombatTracker().getDeathMessage().getString());
             }
 
             this.dead = true;
@@ -266,7 +265,7 @@ public class AngelEntity extends Monster {
                 ServerLevel serverlevel = (ServerLevel)level;
                 if (entity == null || entity.killedEntity(serverlevel, this)) {
                     this.gameEvent(GameEvent.ENTITY_DIE);
-                    this.dropAllDeathLoot(pDamageSource);
+                    this.dropAllDeathLoot(serverlevel, pDamageSource);
                     this.createWitherRose(livingentity);
                 }
 
@@ -303,7 +302,7 @@ public class AngelEntity extends Monster {
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor pLevel, DifficultyInstance pDifficulty, MobSpawnType pReason, @Nullable SpawnGroupData pSpawnData, @Nullable CompoundTag pDataTag) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor pLevel, DifficultyInstance pDifficulty, MobSpawnType pReason, @Nullable SpawnGroupData pSpawnData) {
         Random random = new Random();
         ServerPlayer nearestPlayer = this.getNearestPlayer(pLevel.getLevel(), this.blockPosition());
         float rotToSet = this.calculateLookRot(nearestPlayer, 360);
@@ -316,7 +315,7 @@ public class AngelEntity extends Monster {
                 this.entityData.set(DATA_CLOSE, true);
             }
         }
-        return super.finalizeSpawn(pLevel, pDifficulty, pReason, pSpawnData, pDataTag);
+        return super.finalizeSpawn(pLevel, pDifficulty, pReason, pSpawnData);
     }
 
     public final void teleportToWithTicket(ServerLevel level, double pX, double pY, double pZ, float y_rotation, float x_rotation) {

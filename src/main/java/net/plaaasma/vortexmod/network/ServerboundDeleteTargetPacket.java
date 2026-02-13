@@ -2,13 +2,17 @@ package net.plaaasma.vortexmod.network;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.plaaasma.vortexmod.VortexMod;
 import net.plaaasma.vortexmod.block.ModBlocks;
 import net.plaaasma.vortexmod.block.entity.CoordinateDesignatorBlockEntity;
 import net.plaaasma.vortexmod.block.entity.KeypadBlockEntity;
@@ -18,50 +22,53 @@ import net.plaaasma.vortexmod.mapdata.LocationMapData;
 import net.plaaasma.vortexmod.mapdata.RotationMapData;
 import net.plaaasma.vortexmod.worldgen.dimension.ModDimensions;
 
-import java.util.function.Supplier;
+public record ServerboundDeleteTargetPacket(BlockPos fromPos, String saveName, boolean targetScreen) implements CustomPacketPayload {
+    public static final Type<ServerboundDeleteTargetPacket> TYPE =
+            new Type<>(ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "serverbound_delete_target"));
 
-public class ServerboundDeleteTargetPacket {
-    private final BlockPos from_pos;
-    private final String save_name;
-    private final Boolean targetScreen;
+    public static final StreamCodec<RegistryFriendlyByteBuf, ServerboundDeleteTargetPacket> STREAM_CODEC =
+            StreamCodec.of(ServerboundDeleteTargetPacket::encode, ServerboundDeleteTargetPacket::decode);
 
-    public ServerboundDeleteTargetPacket(BlockPos from_pos, String save_pos, Boolean targetScreen) {
-        this.from_pos = from_pos;
-        this.save_name = save_pos;
-        this.targetScreen = targetScreen;
+    public static ServerboundDeleteTargetPacket decode(RegistryFriendlyByteBuf buffer) {
+        return new ServerboundDeleteTargetPacket(buffer.readBlockPos(), buffer.readUtf(), buffer.readBoolean());
     }
 
-    public ServerboundDeleteTargetPacket(FriendlyByteBuf buffer) {
-        this(buffer.readBlockPos(), buffer.readUtf(), buffer.readBoolean());
+    public static void encode(RegistryFriendlyByteBuf buffer, ServerboundDeleteTargetPacket packet) {
+        buffer.writeBlockPos(packet.fromPos);
+        buffer.writeUtf(packet.saveName);
+        buffer.writeBoolean(packet.targetScreen);
     }
 
-    public void encode(FriendlyByteBuf buffer) {
-        buffer.writeBlockPos(this.from_pos);
-        buffer.writeUtf(this.save_name);
-        buffer.writeBoolean(this.targetScreen);
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
-    public void handle(Supplier<NetworkEvent.ServerCustomPayloadEvent.Context> context) {
-        NetworkEvent.Context realContext = context.get();
-        if (!this.targetScreen) {
-            MinecraftServer minecraftserver = realContext.getSender().getServer();
+    public void handle(IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (this.targetScreen) return;
+            if (!(context.player() instanceof ServerPlayer player)) return;
+
+            MinecraftServer minecraftserver = player.getServer();
+            if (minecraftserver == null) return;
+
             ServerLevel tardis_dim = minecraftserver.getLevel(ModDimensions.tardisDIM_LEVEL_KEY);
             ServerLevel vortex = minecraftserver.getLevel(ModDimensions.vortexDIM_LEVEL_KEY);
-            ServerPlayer player = realContext.getSender();
+            if (tardis_dim == null || vortex == null) return;
+
             LocationMapData coord_data = LocationMapData.get(vortex);
             RotationMapData rotation_data = RotationMapData.get(vortex);
             DimensionMapData dim_data = DimensionMapData.get(tardis_dim);
-            ServerLevel level = realContext.getSender().serverLevel();
-
+            ServerLevel level = player.serverLevel();
             boolean core_found = false;
 
-            BlockPos corePos = this.from_pos;
+            BlockPos corePos = this.fromPos;
             VortexInterfaceBlockEntity vortexInterfaceBlockEntity = null;
 
             for (int _x = -16; _x <= 16 && !core_found; _x++) {
                 for (int _y = -16; _y <= 16 && !core_found; _y++) {
                     for (int _z = -16; _z <= 16 && !core_found; _z++) {
-                        BlockPos currentPos = this.from_pos.offset(_x, _y, _z);
+                        BlockPos currentPos = this.fromPos.offset(_x, _y, _z);
 
                         BlockState blockState = level.getBlockState(currentPos);
                         if (blockState.getBlock() == ModBlocks.INTERFACE_BLOCK.get()) {
@@ -101,7 +108,7 @@ public class ServerboundDeleteTargetPacket {
             }
 
             if (core_found && has_components && designatorEntity != null) {
-                String dataKey = player.getScoreboardName() + this.save_name;
+                String dataKey = player.getScoreboardName() + this.saveName;
                 if (coord_data.getDataMap().containsKey(dataKey)) {
                     BlockPos savedPos = coord_data.getDataMap().get(dataKey);
                     String savedDimName = dim_data.getDataMap().get(dataKey);
@@ -109,7 +116,7 @@ public class ServerboundDeleteTargetPacket {
                     coord_data.getDataMap().remove(dataKey);
                     rotation_data.getDataMap().remove(dataKey);
                     dim_data.getDataMap().remove(dataKey);
-                    realContext.getSender().displayClientMessage(Component.literal("Deleting " + this.save_name + ". (" + savedPos.getX() + " " + savedPos.getY() + " " + savedPos.getZ() + " | " + savedDimName + ")"), false);
+                    player.displayClientMessage(Component.literal("Deleting " + this.saveName + ". (" + savedPos.getX() + " " + savedPos.getY() + " " + savedPos.getZ() + " | " + savedDimName + ")"), false);
 
                     coord_data.setDirty();
                     rotation_data.setDirty();
@@ -117,20 +124,18 @@ public class ServerboundDeleteTargetPacket {
 
                     keypadBlockEntity.coordData = coord_data.getDataMap();
                     keypadBlockEntity.dimData = dim_data.getDataMap();
-                    PacketHandler.sendToAllClients(new ClientboundTargetMapPacket(level.dimension().location().getPath(), this.from_pos, coord_data.getDataMap(), dim_data.getDataMap()));
+                    PacketHandler.sendToAllClients(new ClientboundTargetMapPacket(level.dimension().location().getPath(), this.fromPos, coord_data.getDataMap(), dim_data.getDataMap()));
                 } else {
-                    realContext.getSender().displayClientMessage(Component.literal("You do not have a saved destination called " + this.save_name + ", you can list your destinations with /tardis list"), false);
+                    player.displayClientMessage(Component.literal("You do not have a saved destination called " + this.saveName + ", you can list your destinations with /tardis list"), false);
                 }
             } else {
                 if (!core_found) {
-                    realContext.getSender().displayClientMessage(Component.literal("Core is not in range.").withStyle(ChatFormatting.RED), false);
+                    player.displayClientMessage(Component.literal("Core is not in range.").withStyle(ChatFormatting.RED), false);
                 }
                 if (!has_components) {
-                    realContext.getSender().displayClientMessage(Component.literal("Coordinate components not in range. (Keypad and Designator)").withStyle(ChatFormatting.RED), false);
+                    player.displayClientMessage(Component.literal("Coordinate components not in range. (Keypad and Designator)").withStyle(ChatFormatting.RED), false);
                 }
             }
-        }
-
-        realContext.setPacketHandled(true);
+        });
     }
 }

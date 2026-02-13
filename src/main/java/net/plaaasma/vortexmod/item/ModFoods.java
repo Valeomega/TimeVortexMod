@@ -6,6 +6,6 @@ import net.minecraft.world.food.FoodProperties;
 
 public class ModFoods {
     public static final FoodProperties CHEESE = new FoodProperties.Builder().nutrition(2)
-            .saturationMod(0.2f)
+            .saturationModifier(0.2f)
             .effect(() -> new MobEffectInstance(MobEffects.DAMAGE_BOOST, 200), 1f).build();
 }

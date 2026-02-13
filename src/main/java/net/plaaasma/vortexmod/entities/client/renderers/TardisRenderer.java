@@ -79,7 +79,7 @@ public class TardisRenderer extends MobRenderer<TardisEntity, TardisModel<Tardis
         }
 
         float f7 = this.getBob(pEntity, pPartialTicks);
-        this.setupRotations(pEntity, pPoseStack, f7, f, pPartialTicks);
+        this.setupRotations(pEntity, pPoseStack, f7, f, pPartialTicks, 0);
         pPoseStack.scale(-1.0F, -1.0F, 1.0F);
         this.scale(pEntity, pPoseStack, pPartialTicks);
         pPoseStack.translate(0.0F, -1.501F, 0.0F);
@@ -104,7 +104,8 @@ public class TardisRenderer extends MobRenderer<TardisEntity, TardisModel<Tardis
         if (rendertype != null) {
             VertexConsumer vertexconsumer = pBuffer.getBuffer(rendertype);
             int i = getOverlayCoords(pEntity, this.getWhiteOverlayProgress(pEntity, pPartialTicks));
-            this.model.renderToBuffer(pPoseStack, vertexconsumer, pPackedLight, i, 1, 1, 1, pEntity.getAlpha());
+            int modelColor = 0xFFFFFF | ((int)(pEntity.getAlpha() * 255) << 24);
+            this.model.renderToBuffer(pPoseStack, vertexconsumer, pPackedLight, i, modelColor);
             if (!pEntity.isInFlight() && pEntity.getAlpha() > 0.01) {
                 String signText = pEntity.getSign();
                 int color = ChatFormatting.WHITE.getColor();
@@ -133,6 +134,6 @@ public class TardisRenderer extends MobRenderer<TardisEntity, TardisModel<Tardis
 
     @Override
     public ResourceLocation getTextureLocation(TardisEntity pEntity) {
-        return new ResourceLocation(VortexMod.MODID, "textures/entity/tardis_texture.png");
+        return ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "textures/entity/tardis_texture.png");
     }
 }

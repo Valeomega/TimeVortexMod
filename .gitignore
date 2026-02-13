@@ -20,8 +20,16 @@ build
 # other
 eclipse
 run
+runs
 
 # Files from Forge MDK
 forge*changelog.txt
 /run-data/
 /src/generated/
+build_error*.log
+
+# Secrets
+.env
+
+# Build outputs logic
+build_output*.txt

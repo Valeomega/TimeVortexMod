@@ -1,5 +1,6 @@
 package net.plaaasma.vortexmod.block.custom;
 
+import com.mojang.serialization.MapCodec;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.multiplayer.ClientHandshakePacketListenerImpl;
 import net.minecraft.core.BlockPos;
@@ -13,6 +14,7 @@ import java.util.*;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,12 +22,14 @@ import net.minecraft.server.network.MemoryServerHandshakePacketListenerImpl;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
@@ -37,15 +41,13 @@ import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraftforge.common.world.ForgeChunkManager;
-import net.minecraftforge.event.ServerChatEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.common.world.chunk.TicketController;
 import net.plaaasma.vortexmod.VortexMod;
 import net.plaaasma.vortexmod.block.ModBlocks;
 import net.plaaasma.vortexmod.block.entity.*;
@@ -55,14 +57,26 @@ import net.plaaasma.vortexmod.item.ModItems;
 import net.plaaasma.vortexmod.mapdata.LocationMapData;
 import net.plaaasma.vortexmod.sound.ModSounds;
 import net.plaaasma.vortexmod.worldgen.dimension.ModDimensions;
-import org.apache.logging.log4j.core.jmx.Server;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 
 public class VortexInterfaceBlock extends BaseEntityBlock {
+    public static final MapCodec<VortexInterfaceBlock> CODEC = BlockBehaviour.simpleCodec(VortexInterfaceBlock::new);
+    private static final TicketController CHUNK_TICKET_CONTROLLER =
+            new TicketController(ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "chunk_tickets"));
+    
+    public static TicketController getTicketController() {
+        return CHUNK_TICKET_CONTROLLER;
+    }
+
     public VortexInterfaceBlock(Properties pProperties) {
         super(pProperties);
+    }
+
+    @Override
+    public MapCodec<VortexInterfaceBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -71,19 +85,31 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
     }
 
     @Override
-    public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+    protected InteractionResult useWithoutItem(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, BlockHitResult pHit) {
+        return doUse(pState, pLevel, pPos, pPlayer, InteractionHand.MAIN_HAND, ItemStack.EMPTY, pHit);
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack pStack, BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+        InteractionResult result = doUse(pState, pLevel, pPos, pPlayer, pHand, pStack, pHit);
+        if (result.consumesAction()) {
+            return ItemInteractionResult.sidedSuccess(pLevel.isClientSide());
+        }
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    private InteractionResult doUse(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, ItemStack holdingItem, BlockHitResult pHit) {
         if (pLevel instanceof ServerLevel serverLevel) {
             MinecraftServer minecraftserver = serverLevel.getServer();
             ServerLevel overworld = minecraftserver.getLevel(Level.OVERWORLD);
             ServerLevel tardisDimension = minecraftserver.getLevel(ModDimensions.tardisDIM_LEVEL_KEY);
             LocationMapData data = LocationMapData.get(overworld);
-            ItemStack holdingItem = pPlayer.getItemInHand(pHand);
             if (holdingItem.is(ModItems.WRENCH.get())) {
                 BlockEntity blockEntity = serverLevel.getBlockEntity(pPos);
 
                 if (blockEntity != null) {
                     ItemStack droppedItem = new ItemStack(pState.getBlock()); // Create an ItemStack of the block
-                    blockEntity.saveToItem(droppedItem);
+                    blockEntity.saveToItem(droppedItem, serverLevel.registryAccess());
                     serverLevel.removeBlock(pPos, false); // Remove the block
 
                     // Spawn the ItemStack in the world
@@ -98,9 +124,9 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
             }
 
             VortexInterfaceBlockEntity localBlockEntity = (VortexInterfaceBlockEntity) serverLevel.getBlockEntity(pPos);
-            int ownerCode = localBlockEntity.data.get(2);
-            if (ownerCode == 0) {
-                localBlockEntity.data.set(2, pPlayer.getScoreboardName().hashCode());
+            UUID ownerCode = localBlockEntity.getOwner();
+            if (ownerCode == null) {
+                localBlockEntity.setOwner(pPlayer.getUUID());
                 pPlayer.displayClientMessage(Component.literal("TARDIS owner set to " + pPlayer.getScoreboardName()).withStyle(ChatFormatting.AQUA), true);
                 return InteractionResult.CONSUME;
             }
@@ -112,20 +138,31 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
 
                 int greatest_x_coordinate = -1000000;
                 int greatest_z_coordinate = -1000000;
-                for (String key : keyList) {
-                    BlockPos interiorPos = data.getDataMap().get(key);
-                    int x_coordinate = interiorPos.getX();
-                    int z_coordinate = interiorPos.getZ();
-                    if (key.equals(Integer.toString(ownerCode))) {
-                        greatest_x_coordinate = x_coordinate;
-                        greatest_z_coordinate = z_coordinate;
-                        break;
+                
+                // First, try to find existing entry for this owner
+                String ownerKey = ownerCode.toString();
+                if (data.getDataMap().containsKey(ownerKey)) {
+                    BlockPos interiorPos = data.getDataMap().get(ownerKey);
+                    greatest_x_coordinate = interiorPos.getX();
+                    greatest_z_coordinate = interiorPos.getZ();
+                } else {
+                    // If no entry for owner, find the maximum coordinates from all entries
+                    for (String key : keyList) {
+                        BlockPos interiorPos = data.getDataMap().get(key);
+                        int x_coordinate = interiorPos.getX();
+                        int z_coordinate = interiorPos.getZ();
+                        if (x_coordinate > greatest_x_coordinate) {
+                            greatest_x_coordinate = x_coordinate;
+                        }
+                        if (z_coordinate > greatest_z_coordinate) {
+                            greatest_z_coordinate = z_coordinate;
+                        }
                     }
-                    if (x_coordinate > greatest_x_coordinate) {
-                        greatest_x_coordinate = x_coordinate;
-                    }
-                    if (z_coordinate > greatest_z_coordinate) {
-                        greatest_z_coordinate = z_coordinate;
+                    
+                    // If still no coordinates found, use a default location
+                    if (greatest_x_coordinate == -1000000 && greatest_z_coordinate == -1000000) {
+                        greatest_x_coordinate = 0;
+                        greatest_z_coordinate = 0;
                     }
                 }
 
@@ -187,7 +224,7 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
 
                             CompoundTag nbtData = null;
                             if (blockEntity != null) {
-                                nbtData = blockEntity.saveWithFullMetadata();
+                                nbtData = blockEntity.saveWithFullMetadata(serverLevel.registryAccess());
                             }
 
                             tardisDimension.setBlockAndUpdate(currentTargetPos, blockState);
@@ -195,7 +232,7 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
                             if (nbtData != null) {
                                 BlockEntity newBlockEntity = tardisDimension.getBlockEntity(currentTargetPos);
                                 if (newBlockEntity != null) {
-                                    newBlockEntity.load(nbtData);
+                                    newBlockEntity.loadWithComponents(nbtData, serverLevel.registryAccess());
                                 }
                             }
 
@@ -217,7 +254,7 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
                 for (BlockPos positionToBeRemoved : toBeRemoved) {
                     BlockEntity blockEntity = serverLevel.getBlockEntity(positionToBeRemoved);
                     if (blockEntity != null) {
-                        blockEntity.load(new CompoundTag());
+                        blockEntity.loadWithComponents(new CompoundTag(), serverLevel.registryAccess());
                     }
                     serverLevel.removeBlock(positionToBeRemoved, false);
                     serverLevel.removeBlockEntity(positionToBeRemoved);
@@ -235,19 +272,104 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
 
                 tardisDimension.setBlockAndUpdate(tardisTarget, ModBlocks.DOOR_BLOCK.get().defaultBlockState());
 
+                // Ensure interfacePos is set - if not found in loop, use the position where the interface was copied
+                if (interfacePos == null) {
+                    // Find the interface position in the tardis dimension (where we copied the interface block)
+                    for (int x = -size; x <= size; x++) {
+                        for (int y = -1; y <= y_size + (y_size - 1); y++) {
+                            for (int z = -size; z <= size; z++) {
+                                BlockPos currentTargetPos = tardisTarget.offset(x + door_distance, y, z);
+                                BlockEntity blockEntity = tardisDimension.getBlockEntity(currentTargetPos);
+                                if (blockEntity instanceof VortexInterfaceBlockEntity) {
+                                    interfacePos = currentTargetPos;
+                                    break;
+                                }
+                            }
+                            if (interfacePos != null) break;
+                        }
+                        if (interfacePos != null) break;
+                    }
+                    // If still not found, use a position near the door
+                    if (interfacePos == null) {
+                        interfacePos = tardisTarget.offset(door_distance, 0, 0);
+                    }
+                }
+
+                if (interfacePos == null) {
+                    pPlayer.displayClientMessage(Component.literal("Error: Could not determine interface position").withStyle(ChatFormatting.RED), false);
+                    return InteractionResult.CONSUME;
+                }
+
                 VortexInterfaceBlockEntity interfaceBlockEntity = (VortexInterfaceBlockEntity) tardisDimension.getBlockEntity(interfacePos);
+                
+                if (interfaceBlockEntity == null) {
+                    // Try to create the interface block if it doesn't exist
+                    tardisDimension.setBlockAndUpdate(interfacePos, ModBlocks.INTERFACE_BLOCK.get().defaultBlockState());
+                    interfaceBlockEntity = (VortexInterfaceBlockEntity) tardisDimension.getBlockEntity(interfacePos);
+                    if (interfaceBlockEntity == null) {
+                        pPlayer.displayClientMessage(Component.literal("Error: Could not create interface in TARDIS dimension").withStyle(ChatFormatting.RED), false);
+                        return InteractionResult.CONSUME;
+                    }
+                }
 
-                TardisEntity tardisMob = ModEntities.TARDIS.get().spawn(serverLevel, pPos, MobSpawnType.NATURAL);
-                serverLevel.addFreshEntity(tardisMob);
-
-                tardisMob.setOwnerID(ownerCode);
-                interfaceBlockEntity.setExtUUID(tardisMob.getUUID());
-                data.getDataMap().put(tardisMob.getUUID().toString(), tardisTarget);
+                // Check if there's already a TardisEntity - reuse it instead of creating a new one
+                UUID oldExtUUID = localBlockEntity.getExtUUID();
+                TardisEntity tardisMob = null;
+                
+                if (oldExtUUID != null) {
+                    // Search all dimensions for existing TardisEntity
+                    Iterable<ServerLevel> allLevels = minecraftserver.getAllLevels();
+                    for (ServerLevel level : allLevels) {
+                        TardisEntity existingTardis = (TardisEntity) level.getEntity(oldExtUUID);
+                        if (existingTardis != null) {
+                            tardisMob = existingTardis;
+                            // Update the existing TardisEntity's position if needed
+                            if (tardisMob.level() != serverLevel) {
+                                tardisMob.teleportToWithTicket(serverLevel, pPos.getX() + 0.5, pPos.getY(), pPos.getZ() + 0.5, tardisMob.getYRot(), tardisMob.getXRot());
+                            } else {
+                                tardisMob.setPos(pPos.getX() + 0.5, pPos.getY(), pPos.getZ() + 0.5);
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                // Only create a new TardisEntity if one doesn't exist
+                if (tardisMob == null) {
+                    tardisMob = ModEntities.TARDIS.get().spawn(serverLevel, pPos, MobSpawnType.NATURAL);
+                    if (tardisMob != null && !tardisMob.isRemoved()) {
+                        // Check if entity was already added (avoid duplicates)
+                        if (serverLevel.getEntity(tardisMob.getUUID()) == null) {
+                            serverLevel.addFreshEntity(tardisMob);
+                        } else {
+                            tardisMob = (TardisEntity) serverLevel.getEntity(tardisMob.getUUID());
+                        }
+                        tardisMob.setOwnerID(ownerCode);
+                        interfaceBlockEntity.setExtUUID(tardisMob.getUUID());
+                        data.getDataMap().put(tardisMob.getUUID().toString(), tardisTarget);
+                    }
+                } else {
+                    // Update the existing TardisEntity's owner and link
+                    if (!tardisMob.isRemoved()) {
+                        tardisMob.setOwnerID(ownerCode);
+                        interfaceBlockEntity.setExtUUID(tardisMob.getUUID());
+                        // Update the location map data
+                        data.getDataMap().put(tardisMob.getUUID().toString(), tardisTarget);
+                    }
+                }
 
                 ChunkPos chunkPos = tardisDimension.getChunkAt(interfacePos).getPos();
-                ForgeChunkManager.forceChunk(tardisDimension, VortexMod.MODID, interfacePos, chunkPos.x, chunkPos.z, true, true);
+                try {
+                    CHUNK_TICKET_CONTROLLER.forceChunk(tardisDimension, interfacePos, chunkPos.x, chunkPos.z, true, true);
+                } catch (IllegalArgumentException e) {
+                    VortexMod.LOGGER.warn("Failed to force chunk for TARDIS dimension: {}", e.getMessage());
+                }
                 chunkPos = serverLevel.getChunkAt(pPos).getPos();
-                ForgeChunkManager.forceChunk(serverLevel, VortexMod.MODID, pPos, chunkPos.x, chunkPos.z, true, true);
+                try {
+                    CHUNK_TICKET_CONTROLLER.forceChunk(serverLevel, pPos, chunkPos.x, chunkPos.z, true, true);
+                } catch (IllegalArgumentException e) {
+                    VortexMod.LOGGER.warn("Failed to force chunk for server level: {}", e.getMessage());
+                }
 
                 pPlayer.setItemInHand(pHand, new ItemStack(ModItems.TARDIS_KEY.get(), 1));
 
@@ -289,7 +411,11 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
     public void onPlace(BlockState pState, Level pLevel, BlockPos pPos, BlockState pOldState, boolean pMovedByPiston) {
         if (pLevel instanceof ServerLevel serverLevel) {
             ChunkPos chunkPos = serverLevel.getChunkAt(pPos).getPos();
-            ForgeChunkManager.forceChunk(serverLevel, VortexMod.MODID, pPos, chunkPos.x, chunkPos.z, true, true);
+            try {
+                CHUNK_TICKET_CONTROLLER.forceChunk(serverLevel, pPos, chunkPos.x, chunkPos.z, true, true);
+            } catch (IllegalArgumentException e) {
+                VortexMod.LOGGER.warn("Failed to force chunk on place: {}", e.getMessage());
+            }
         }
 
         super.onPlace(pState, pLevel, pPos, pOldState, pMovedByPiston);
@@ -313,8 +439,8 @@ public class VortexInterfaceBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void appendHoverText(ItemStack pStack, @Nullable BlockGetter pLevel, List<Component> pTooltip, TooltipFlag pFlag) {
+    public void appendHoverText(ItemStack pStack, Item.TooltipContext pContext, List<Component> pTooltip, TooltipFlag pFlag) {
         pTooltip.add(Component.translatable("tooltip.vortexmod.interface_block.tooltip"));
-        super.appendHoverText(pStack, pLevel, pTooltip, pFlag);
+        super.appendHoverText(pStack, pContext, pTooltip, pFlag);
     }
 }

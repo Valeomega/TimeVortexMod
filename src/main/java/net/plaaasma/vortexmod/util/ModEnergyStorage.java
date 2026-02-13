@@ -1,9 +1,10 @@
 package net.plaaasma.vortexmod.util;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.Tag;
-import net.minecraftforge.common.util.INBTSerializable;
-import net.minecraftforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.common.util.INBTSerializable;
+import net.neoforged.neoforge.energy.IEnergyStorage;
 
 /**
  * Reference implementation of {@link IEnergyStorage}. Use/extend this or implement your own.
@@ -109,13 +110,13 @@ public class ModEnergyStorage implements IEnergyStorage, INBTSerializable<Tag>
     }
 
     @Override
-    public Tag serializeNBT()
+    public Tag serializeNBT(HolderLookup.Provider provider)
     {
         return IntTag.valueOf(this.getEnergyStored());
     }
 
     @Override
-    public void deserializeNBT(Tag nbt)
+    public void deserializeNBT(HolderLookup.Provider provider, Tag nbt)
     {
         if (!(nbt instanceof IntTag intNbt))
             throw new IllegalArgumentException("Can not deserialize to an instance that isn't the default implementation");

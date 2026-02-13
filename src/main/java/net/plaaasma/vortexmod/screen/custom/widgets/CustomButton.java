@@ -11,14 +11,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.plaaasma.vortexmod.VortexMod;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
-@OnlyIn(Dist.CLIENT)
 public class CustomButton extends AbstractButton {
     public static final int SMALL_WIDTH = 120;
     public static final int DEFAULT_WIDTH = 150;
@@ -58,7 +55,6 @@ public class CustomButton extends AbstractButton {
         this.defaultButtonNarrationText(pNarrationElementOutput);
     }
 
-    @OnlyIn(Dist.CLIENT)
     public static class Builder {
         private final Component message;
         private final CustomButton.OnPress onPress;
@@ -132,18 +128,17 @@ public class CustomButton extends AbstractButton {
         pGuiGraphics.setColor(1.0F, 1.0F, 1.0F, this.alpha);
         RenderSystem.enableBlend();
         RenderSystem.enableDepthTest();
-        pGuiGraphics.m_280027_(new ResourceLocation(VortexMod.MODID, "textures/gui/widgets.png"), this.getX(), this.getY(), this.getWidth(), this.getHeight(), 20, 4, 200, 20, 0, this.shouldDoBorder());
+        ResourceLocation texture = ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "textures/gui/widgets.png");
+        pGuiGraphics.blit(texture, this.getX(), this.getY(), 20, this.shouldDoBorder(), this.getWidth(), this.getHeight(), 200, 20);
         pGuiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         int i = getFGColor();
-        this.m_280139_(pGuiGraphics, minecraft.font, i | Mth.ceil(this.alpha * 255.0F) << 24);
+        this.renderString(pGuiGraphics, minecraft.font, i | Mth.ceil(this.alpha * 255.0F) << 24);
     }
 
-    @OnlyIn(Dist.CLIENT)
     public interface CreateNarration {
         MutableComponent createNarrationMessage(Supplier<MutableComponent> pMessageSupplier);
     }
 
-    @OnlyIn(Dist.CLIENT)
     public interface OnPress {
         void onPress(CustomButton CustomButton);
     }

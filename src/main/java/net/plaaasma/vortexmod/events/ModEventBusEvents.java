@@ -2,23 +2,21 @@ package net.plaaasma.vortexmod.events;
 
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
-import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
-import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import net.plaaasma.vortexmod.VortexMod;
 import net.plaaasma.vortexmod.entities.ModEntities;
 import net.plaaasma.vortexmod.entities.custom.*;
 import net.plaaasma.vortexmod.network.PacketHandler;
-import oshi.util.tuples.Pair;
+import net.plaaasma.vortexmod.worldgen.ModWorldGen;
 
-import java.util.ArrayList;
-
-@Mod.EventBusSubscriber(modid = VortexMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = VortexMod.MODID, bus = EventBusSubscriber.Bus.MOD)
 public class ModEventBusEvents {
 
     @SubscribeEvent
@@ -41,39 +39,35 @@ public class ModEventBusEvents {
     }
 
     @SubscribeEvent
-    public static void registerSpawnPlacement(SpawnPlacementRegisterEvent event) {
+    public static void registerSpawnPlacement(RegisterSpawnPlacementsEvent event) {
         event.register(
                 ModEntities.GOLD_DALEK.get(),
-                SpawnPlacements.Type.ON_GROUND,
+                SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Animal::checkAnimalSpawnRules,
-                SpawnPlacementRegisterEvent.Operation.AND
+                RegisterSpawnPlacementsEvent.Operation.AND
         );
         event.register(
                 ModEntities.SILVER_DALEK.get(),
-                SpawnPlacements.Type.ON_GROUND,
+                SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 DalekEntity::canSpawn,
-                SpawnPlacementRegisterEvent.Operation.AND
+                RegisterSpawnPlacementsEvent.Operation.AND
         );
         event.register(
                 ModEntities.BLACK_DALEK.get(),
-                SpawnPlacements.Type.ON_GROUND,
+                SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 DalekEntity::canSpawn,
-                SpawnPlacementRegisterEvent.Operation.AND
+                RegisterSpawnPlacementsEvent.Operation.AND
         );
         event.register(
                 ModEntities.SILVER_BLACK_DALEK.get(),
-                SpawnPlacements.Type.ON_GROUND,
+                SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 DalekEntity::canSpawn,
-                SpawnPlacementRegisterEvent.Operation.AND
+                RegisterSpawnPlacementsEvent.Operation.AND
         );
     }
 
-    @SubscribeEvent
-    public static void commonSetup(FMLCommonSetupEvent event) {
-        event.enqueueWork(PacketHandler::register);
-    }
 }

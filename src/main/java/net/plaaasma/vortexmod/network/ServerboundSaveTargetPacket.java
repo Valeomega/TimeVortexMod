@@ -2,13 +2,17 @@ package net.plaaasma.vortexmod.network;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.plaaasma.vortexmod.VortexMod;
 import net.plaaasma.vortexmod.block.ModBlocks;
 import net.plaaasma.vortexmod.block.entity.CoordinateDesignatorBlockEntity;
 import net.plaaasma.vortexmod.block.entity.KeypadBlockEntity;
@@ -18,9 +22,12 @@ import net.plaaasma.vortexmod.mapdata.LocationMapData;
 import net.plaaasma.vortexmod.mapdata.RotationMapData;
 import net.plaaasma.vortexmod.worldgen.dimension.ModDimensions;
 
-import java.util.function.Supplier;
+public class ServerboundSaveTargetPacket implements CustomPacketPayload {
+    public static final Type<ServerboundSaveTargetPacket> TYPE =
+            new Type<>(ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "serverbound_save_target"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, ServerboundSaveTargetPacket> STREAM_CODEC =
+            StreamCodec.of(ServerboundSaveTargetPacket::encode, ServerboundSaveTargetPacket::decode);
 
-public class ServerboundSaveTargetPacket {
     private final BlockPos from_pos;
     private final String save_name;
     private final Boolean is_save;
@@ -33,29 +40,38 @@ public class ServerboundSaveTargetPacket {
         this.targetScreen = targetScreen;
     }
 
-    public ServerboundSaveTargetPacket(FriendlyByteBuf buffer) {
-        this(buffer.readBlockPos(), buffer.readUtf(), buffer.readBoolean(), buffer.readBoolean());
+    public static ServerboundSaveTargetPacket decode(RegistryFriendlyByteBuf buffer) {
+        return new ServerboundSaveTargetPacket(buffer.readBlockPos(), buffer.readUtf(), buffer.readBoolean(), buffer.readBoolean());
     }
 
-    public void encode(FriendlyByteBuf buffer) {
-        buffer.writeBlockPos(this.from_pos);
-        buffer.writeUtf(this.save_name);
-        buffer.writeBoolean(this.is_save);
-        buffer.writeBoolean(this.targetScreen);
+    public static void encode(RegistryFriendlyByteBuf buffer, ServerboundSaveTargetPacket packet) {
+        buffer.writeBlockPos(packet.from_pos);
+        buffer.writeUtf(packet.save_name);
+        buffer.writeBoolean(packet.is_save);
+        buffer.writeBoolean(packet.targetScreen);
     }
 
-    public void handle(Supplier<NetworkEvent.ServerCustomPayloadEvent.Context> context) {
-        NetworkEvent.Context realContext = context.get();
-        if (!this.targetScreen) {
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
+
+    public void handle(IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (this.targetScreen) return;
+            if (!(context.player() instanceof ServerPlayer player)) return;
+
+            MinecraftServer minecraftserver = player.getServer();
+            if (minecraftserver == null) return;
+
             if (this.is_save) {
-                MinecraftServer minecraftserver = realContext.getSender().getServer();
                 ServerLevel tardis_dim = minecraftserver.getLevel(ModDimensions.tardisDIM_LEVEL_KEY);
                 ServerLevel vortex = minecraftserver.getLevel(ModDimensions.vortexDIM_LEVEL_KEY);
-                ServerPlayer player = realContext.getSender();
+                if (tardis_dim == null || vortex == null) return;
                 LocationMapData coord_data = LocationMapData.get(vortex);
                 RotationMapData rotation_data = RotationMapData.get(vortex);
                 DimensionMapData dim_data = DimensionMapData.get(tardis_dim);
-                ServerLevel level = realContext.getSender().serverLevel();
+                ServerLevel level = player.serverLevel();
 
                 boolean core_found = false;
 
@@ -105,7 +121,7 @@ public class ServerboundSaveTargetPacket {
                 }
 
                 if (core_found && has_components && designatorEntity != null) {
-                    int dim_hash = vortexInterfaceBlockEntity.data.get(10);
+                    int dim_hash = vortexInterfaceBlockEntity.data.get(9);
 
                     Iterable<ServerLevel> serverLevels = minecraftserver.getAllLevels();
                     ServerLevel currentLevel = level;
@@ -116,13 +132,13 @@ public class ServerboundSaveTargetPacket {
                         }
                     }
 
-                    BlockPos targetVec = new BlockPos(vortexInterfaceBlockEntity.data.get(3), vortexInterfaceBlockEntity.data.get(4), vortexInterfaceBlockEntity.data.get(5));
+                    BlockPos currentVec = new BlockPos(vortexInterfaceBlockEntity.data.get(6), vortexInterfaceBlockEntity.data.get(7), vortexInterfaceBlockEntity.data.get(8));
 
-                    coord_data.getDataMap().put(player.getScoreboardName() + this.save_name, targetVec);
+                    coord_data.getDataMap().put(player.getScoreboardName() + this.save_name, currentVec);
                     rotation_data.getDataMap().put(player.getScoreboardName() + this.save_name, vortexInterfaceBlockEntity.data.get(12));
                     dim_data.getDataMap().put(player.getScoreboardName() + this.save_name, currentLevel.dimension().location().getPath());
 
-                    realContext.getSender().displayClientMessage(Component.literal("Adding the current target coordinates (" + targetVec.getX() + " " + targetVec.getY() + " " + targetVec.getZ() + " | " + currentLevel.dimension().location().getPath() + ") as " + this.save_name), false);
+                    player.displayClientMessage(Component.literal("Saving your current location (" + currentVec.getX() + " " + currentVec.getY() + " " + currentVec.getZ() + " | " + currentLevel.dimension().location().getPath() + ") as " + this.save_name), false);
                     coord_data.setDirty();
                     rotation_data.setDirty();
                     dim_data.setDirty();
@@ -131,20 +147,19 @@ public class ServerboundSaveTargetPacket {
                     PacketHandler.sendToAllClients(new ClientboundTargetMapPacket(level.dimension().location().getPath(), this.from_pos, coord_data.getDataMap(), dim_data.getDataMap()));
                 } else {
                     if (!core_found) {
-                        realContext.getSender().displayClientMessage(Component.literal("Core is not in range.").withStyle(ChatFormatting.RED), false);
+                        player.displayClientMessage(Component.literal("Core is not in range.").withStyle(ChatFormatting.RED), false);
                     }
                     if (!has_components) {
-                        realContext.getSender().displayClientMessage(Component.literal("Coordinate components not in range. (Keypad and Designator)").withStyle(ChatFormatting.RED), false);
+                        player.displayClientMessage(Component.literal("Coordinate components not in range. (Keypad and Designator)").withStyle(ChatFormatting.RED), false);
                     }
                 }
             } else {
-                MinecraftServer minecraftserver = realContext.getSender().getServer();
                 ServerLevel tardis_dim = minecraftserver.getLevel(ModDimensions.tardisDIM_LEVEL_KEY);
                 ServerLevel vortex = minecraftserver.getLevel(ModDimensions.vortexDIM_LEVEL_KEY);
-                ServerPlayer player = realContext.getSender();
+                if (tardis_dim == null || vortex == null) return;
                 LocationMapData coord_data = LocationMapData.get(vortex);
                 DimensionMapData dim_data = DimensionMapData.get(tardis_dim);
-                ServerLevel level = realContext.getSender().serverLevel();
+                ServerLevel level = player.serverLevel();
 
                 boolean core_found = false;
 
@@ -210,21 +225,19 @@ public class ServerboundSaveTargetPacket {
                         vortexInterfaceBlockEntity.data.set(17, savedPos.getZ());
                         vortexInterfaceBlockEntity.data.set(18, savedDimHash);
 
-                        realContext.getSender().displayClientMessage(Component.literal("Loading " + this.save_name + " to the designator. (" + savedPos.getX() + " " + savedPos.getY() + " " + savedPos.getZ() + " | " + savedDimName + ")"), false);
+                        player.displayClientMessage(Component.literal("Loading " + this.save_name + " to the designator. (" + savedPos.getX() + " " + savedPos.getY() + " " + savedPos.getZ() + " | " + savedDimName + ")"), false);
                     } else {
-                        realContext.getSender().displayClientMessage(Component.literal("You do not have a saved destination called " + this.save_name + ", you can list your destinations with /tardis list"), false);
+                        player.displayClientMessage(Component.literal("You do not have a saved destination called " + this.save_name + ", you can list your destinations with /tardis list"), false);
                     }
                 } else {
                     if (!core_found) {
-                        realContext.getSender().displayClientMessage(Component.literal("Core is not in range.").withStyle(ChatFormatting.RED), false);
+                        player.displayClientMessage(Component.literal("Core is not in range.").withStyle(ChatFormatting.RED), false);
                     }
                     if (!has_components) {
-                        realContext.getSender().displayClientMessage(Component.literal("Coordinate components not in range. (Keypad and Designator)").withStyle(ChatFormatting.RED), false);
+                        player.displayClientMessage(Component.literal("Coordinate components not in range. (Keypad and Designator)").withStyle(ChatFormatting.RED), false);
                     }
                 }
             }
-        }
-
-        realContext.setPacketHandled(true);
+        });
     }
 }

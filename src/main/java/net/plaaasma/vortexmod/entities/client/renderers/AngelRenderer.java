@@ -39,6 +39,6 @@ public class AngelRenderer extends MobRenderer<AngelEntity, AngelModel<AngelEnti
 
     @Override
     public ResourceLocation getTextureLocation(AngelEntity pEntity) {
-        return new ResourceLocation(VortexMod.MODID, "textures/entity/angel_texture.png");
+        return ResourceLocation.fromNamespaceAndPath(VortexMod.MODID, "textures/entity/angel_texture.png");
     }
 }

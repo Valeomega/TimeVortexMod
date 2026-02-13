@@ -3,7 +3,7 @@ package net.plaaasma.vortexmod.worldgen.utils;
 import com.mojang.serialization.DataResult;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.data.worldgen.BootstapContext;
+import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.data.worldgen.SurfaceRuleData;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -22,10 +22,10 @@ import java.util.stream.Stream;
 
 public record ModNoiseGenerator(NoiseSettings noiseSettings, BlockState defaultBlock, BlockState defaultFluid, NoiseRouter noiseRouter, SurfaceRules.RuleSource surfaceRule, List<Climate.ParameterPoint> spawnTarget, int seaLevel, boolean disableMobGeneration, boolean aquifersEnabled, boolean oreVeinsEnabled, boolean useLegacyRandomSource) {
 
-    public static final ResourceKey<NoiseGeneratorSettings> VORTEX_CAVES = ResourceKey.create(Registries.NOISE_SETTINGS, new ResourceLocation(VortexMod.MODID,"vortex_caves"));
-    public static final ResourceKey<NoiseGeneratorSettings> VOID = ResourceKey.create(Registries.NOISE_SETTINGS, new ResourceLocation(VortexMod.MODID,"tardis_void"));
-    public static final ResourceKey<NoiseGeneratorSettings> OVERWORLD = ResourceKey.create(Registries.NOISE_SETTINGS, new ResourceLocation(VortexMod.MODID,"overworld"));
-    public static void bootstrap(BootstapContext<NoiseGeneratorSettings> pContext) {
+    public static final ResourceKey<NoiseGeneratorSettings> VORTEX_CAVES = ResourceKey.create(Registries.NOISE_SETTINGS, ResourceLocation.fromNamespaceAndPath(VortexMod.MODID,"vortex_caves"));
+    public static final ResourceKey<NoiseGeneratorSettings> VOID = ResourceKey.create(Registries.NOISE_SETTINGS, ResourceLocation.fromNamespaceAndPath(VortexMod.MODID,"tardis_void"));
+    public static final ResourceKey<NoiseGeneratorSettings> OVERWORLD = ResourceKey.create(Registries.NOISE_SETTINGS, ResourceLocation.fromNamespaceAndPath(VortexMod.MODID,"overworld"));
+    public static void bootstrap(BootstrapContext<NoiseGeneratorSettings> pContext) {
         pContext.register(VORTEX_CAVES, dummy(pContext));
         pContext.register(VOID, void_dummy(pContext));
         pContext.register(OVERWORLD, overworld(pContext, false, false));
@@ -61,7 +61,7 @@ public record ModNoiseGenerator(NoiseSettings noiseSettings, BlockState defaultB
         return new DensityFunctions.HolderHolder(pDensityFunctions.getOrThrow(pKey));
     }
     private static ResourceKey<DensityFunction> createKey(String pLocation) {
-        return ResourceKey.create(Registries.DENSITY_FUNCTION, new ResourceLocation(pLocation));
+        return ResourceKey.create(Registries.DENSITY_FUNCTION, ResourceLocation.parse(pLocation));
     }
 
     private static DensityFunction slide(DensityFunction pDensityFunction, int pMinY, int pMaxY, int p_224447_, int p_224448_, double p_224449_, int p_224450_, int p_224451_, double p_224452_) {
@@ -209,7 +209,7 @@ public record ModNoiseGenerator(NoiseSettings noiseSettings, BlockState defaultB
 
     // MOD NOISE GENERATORS START HERE //
 
-    public static NoiseGeneratorSettings dummy(BootstapContext<?> pContext) {
+    public static NoiseGeneratorSettings dummy(BootstrapContext<?> pContext) {
         return new NoiseGeneratorSettings(OVERWORLD_NOISE_SETTINGS, Blocks.SEA_LANTERN.defaultBlockState(), Blocks.AIR.defaultBlockState(),
                 noNewCaves(pContext.lookup(Registries.DENSITY_FUNCTION), pContext.lookup(Registries.NOISE),
                         slideNetherLike(pContext.lookup(Registries.DENSITY_FUNCTION), -256, 256)),
@@ -217,7 +217,7 @@ public record ModNoiseGenerator(NoiseSettings noiseSettings, BlockState defaultB
                 false, false);
     }
 
-    public static NoiseGeneratorSettings overworld(BootstapContext<?> pContext, boolean pAmplified, boolean pLarge) {
+    public static NoiseGeneratorSettings overworld(BootstrapContext<?> pContext, boolean pAmplified, boolean pLarge) {
         return new NoiseGeneratorSettings(OVERWORLD_NOISE_SETTINGS, Blocks.BLACKSTONE.defaultBlockState(),
                 Blocks.WATER.defaultBlockState(), overworld(pContext.lookup(Registries.DENSITY_FUNCTION),
                 pContext.lookup(Registries.NOISE), pLarge, pAmplified), ModSurfaceRules.makeRules(),
@@ -225,7 +225,7 @@ public record ModNoiseGenerator(NoiseSettings noiseSettings, BlockState defaultB
                 true, true, false);
     }
 
-    public static NoiseGeneratorSettings void_dummy(BootstapContext<?> pContext) {
+    public static NoiseGeneratorSettings void_dummy(BootstrapContext<?> pContext) {
         return new NoiseGeneratorSettings(OVERWORLD_NOISE_SETTINGS, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(),
                 noNewCaves(pContext.lookup(Registries.DENSITY_FUNCTION), pContext.lookup(Registries.NOISE),
                         slideNetherLike(pContext.lookup(Registries.DENSITY_FUNCTION), -256, 256)),
